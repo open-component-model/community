@@ -80,11 +80,11 @@ Ready to contribute? Read and follow the sections below to get your contribution
 
 ### Pull Request Process
 1. **Create PR.** Please refer to the [Pull Request Checklist](#pull-request-checklist) before marking a PR as ready to be reviewed.
-2. **Triage.** A maintainer will triage the Pull Request by adding the appropriate label for the issue.
-3. **Assign reviews.** A maintainer will be assigned to review the changes in the Pull Request.
-4. **Review/Discussion.** One or more maintainer will review the Pull Request. Checkout the [style guidelines](#styyle-guidelines) section for some things reviewers will look for.
-5. **Address comments by answering questions or changing code.**
-6. **Approve/Merge.** A review should be approved by at least two other maintainers. If the PR was opened by a community contributor, they should wait for a maintainer to merge the Pull Request.
+2. **Triage.** A maintainer will triage the PR by adding the appropriate label for the issue.
+3. **Assign reviews.** A maintainer will be assigned to review the changes in the PR.
+4. **Review.** At least 2 maintainers will review the PR. Checkout the [style guidelines](#styyle-guidelines) section for some things reviewers will look for. Reviewers are expected to add comments to the code.
+5. **Address comments.** The PR owner should address the reviewers' comments by answering questions or making changes to the code. Once changes are applied, the PR owner should let the reviewer know, for example, by replying to the comments with `Done` and requesting another review form the reviewer. If the reviewer approves of the answer and/or changes, they can resolve the comment. Otherwise, they will follow-up with a new comment.
+6. **Approve/Merge.** Once all comments are resolved, a PR must be approved by at least two reviewers who are maintainers of the code. After that, the PR ownder can merge the PR. If the PR was opened by a community contributor, they should wait for a maintainer to merge the PR.
 
 ### Style Guidelines
 
