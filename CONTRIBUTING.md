@@ -11,6 +11,7 @@ Thank you for taking the time to contribute to OCM.
     - [Find an Issue](#find-an-issue)
   - [Local Development](#local-development)
   - [Submitting Pull Requests](#submitting-pull-requests)
+    - [Licensing and Copyright information on file level](#licensing-and-copyright-information-on-file-level)
     - [Pull Request Checklist](#pull-request-checklist)
     - [Pull Request Process](#pull-request-process)
     - [Style Guidelines](#style-guidelines)
