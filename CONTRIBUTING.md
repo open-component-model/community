@@ -82,12 +82,12 @@ the headers of the source file should be kept and eventually aggregated with the
 
 Such files should be explicitly added as deviating from the `.reuse/dep5` config file using the `Files-Excluded:` field. Excluding the file `/pkg/foo.go` and `pkg/bar.go` from the general rule to add the Apache 2.0 license to all files, would look like this:
 
-´´´
+```
 Files: **
 Copyright: 2022 SAP SE or an SAP affiliate company and Open Component Model contributors
 License: Apache-2.0
 Files-Excluded: /pkg/foo.go pkg/bar.go 
-´´´
+```
 
 
 ### Pull Request Checklist
