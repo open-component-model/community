@@ -80,7 +80,7 @@ In general all files of the project are created under Apache 2.0 license. The pr
 
 the headers of the source file should be kept and eventually aggregated with the Apache 2.0 license. Please check the [REUSE FAQ](https://reuse.software/faq/#multi-licensing) for details.
 
-Such files should be explicitly added as deviating from the `.reuse/dep5` config file using the `Files-Excluded:` field. Excluding the file `/pkg/foo.go` and `pkg/bar.go` from the general rule to add the Apache 2.0 license to all files, would look like this:
+Such files should be explicitly added as deviating from the `.reuse/dep5` config file using the `Files-Excluded` field. Excluding the file `/pkg/foo.go` and `pkg/bar.go` from the general rule to add the Apache 2.0 license to all files, would look like this:
 
 ```
 Files: **
