@@ -14,7 +14,7 @@ The following projects form this set of solutions (and more are in the works):
 - [OCM CLI](https://github.com/open-component-model/ocm#ocm-cli) - The `ocm` CLI may also be used to interact with OCM mechanisms. It makes it easy to create component versions and embed them in build processes. Examples can be found in [this Makefile](https://github.com/open-component-model/ocm/blob/main/examples/make/Makefile).
 
 Here are some suggested starting points:
-- Read about the [problem statement](https://github.com/open-component-model/ocm-spec/tree/main/doc/introduction) that the OCM set of solutions can help to solve.
+- Read about the [problem statement](https://github.com/open-component-model/ocm-spec/blob/main/doc/01-model/01-model.md#introduction) that the OCM set of solutions can help to solve.
 - Start with the documentation about Model Elements [here](https://github.com/open-component-model/ocm-spec/tree/main/doc/specification/elements).
 - Check out this [demo](https://github.com/open-component-model/demo) that integrates with [Flux](https://github.com/fluxcd/flux2) as a CD solution.
 
