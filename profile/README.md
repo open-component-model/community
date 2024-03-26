@@ -9,7 +9,7 @@ This repository outlines all the necessary steps to get started with learning ab
 The Open Component Model provides a standard for describing delivery artefacts that can be accessed from many types of component repositories.
 
 The following projects form this set of solutions (and more are in the works):
-- [OCM Specifications](https://github.com/open-component-model/ocm-spec/tree/main/doc/specification) - The `ocm-spec` repository contains semantic, formatting, and other types of specifications for OCM.
+- [OCM Specifications](https://github.com/open-component-model/ocm-spec?tab=readme-ov-file#specification) - The `ocm-spec` repository contains semantic, formatting, and other types of specifications for OCM.
 - [OCM Library](https://github.com/open-component-model/ocm#ocm-library) - The OCM Go library contains an API for interacting with the Open Component Model (OCM) elements and mechanisms. A usage example can be found [here](https://github.com/open-component-model/ocm/tree/main/examples/lib).
 - [OCM CLI](https://github.com/open-component-model/ocm#ocm-cli) - The `ocm` CLI may also be used to interact with OCM mechanisms. It makes it easy to create component versions and embed them in build processes. Examples can be found in [this Makefile](https://github.com/open-component-model/ocm/blob/main/examples/make/Makefile).
 
