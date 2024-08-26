@@ -3,17 +3,17 @@ name: Markdown
 on:
   workflow_call:
     inputs:
-      config_file:
+      md-lint:
         description: 'Path to the markdown configuration file'
         required: true
         default: '.github/config/markdown.yml'
         type: string
-      ignore_path:
+      md-ignore:
         description: 'Path to the markdown ignore file'
         required: true
         default: '.github/config/markdownignore'
         type: string
-      config_path:
+      spellcheck:
         description: 'Path to the spellcheck configuration file'
         required: true
         default: '.github/config/spellcheck.yml'
@@ -30,8 +30,8 @@ jobs:
         with:
           files: .
           dot: true
-          config_file: .github/config/markdownlint.yml
-          ignore_path: .github/config/markdownignore
+          config_file: ${{ inputs.md-lint }}
+          ignore_path: ${{ inputs.md-ignore }}
   spellcheck:
     name: Spellcheck
     runs-on: ubuntu-latest
@@ -40,5 +40,5 @@ jobs:
       - name: Spellcheck
         uses: rojopolis/spellcheck-github-actions@v0
         with:
-          config_path: .github/config/spellcheck.yml
+          config_path: ${{ inputs.spellcheck }}
           task_name: Markdown
