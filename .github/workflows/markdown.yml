@@ -1,0 +1,44 @@
+name: Markdown
+
+on:
+  workflow_call:
+    inputs:
+      config_file:
+        description: 'Path to the markdown configuration file'
+        required: true
+        default: '.github/config/markdown.yml'
+        type: string
+      ignore_path:
+        description: 'Path to the markdown ignore file'
+        required: true
+        default: '.github/config/markdownignore'
+        type: string
+      config_path:
+        description: 'Path to the spellcheck configuration file'
+        required: true
+        default: '.github/config/spellcheck.yml'
+        type: string
+
+jobs:
+  markdown-lint:
+    runs-on: ubuntu-latest
+    name: Lint Markdown
+    steps:
+      - uses: actions/checkout@v4
+      - name: Markdown Linting
+        uses: nosborn/github-action-markdown-cli@v3
+        with:
+          files: .
+          dot: true
+          config_file: .github/config/markdownlint.yml
+          ignore_path: .github/config/markdownignore
+  spellcheck:
+    name: Spellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Spellcheck
+        uses: rojopolis/spellcheck-github-actions@v0
+        with:
+          config_path: .github/config/spellcheck.yml
+          task_name: Markdown
