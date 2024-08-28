@@ -39,6 +39,7 @@ If you wish to propose or discuss a more involved feature or change to any of th
 ## Ways to Contribute
 
 We welcome all types of contributions, including:
+
 - New features
 - Bug reports/fixes
 - Reviewing/updating documentation
@@ -49,8 +50,6 @@ We welcome all types of contributions, including:
 - Release management
 - Reviews
 - [Board discussions](https://github.com/open-component-model/ocm/discussions)
-
-For more involved feature or enhancement requests, please see the section on how to submit an [ADR](#adrs).
 
 You may find it helpful to start a new thread in the [`ocm` Discussion Board](https://github.com/open-component-model/ocm/discussions) for questions, help requests, feature requests, or any other type of discussion about OCM. A maintaine will reach out to you as soon as possible.
 
@@ -83,13 +82,12 @@ the headers of the source file should be kept and eventually aggregated with the
 
 Such files should be explicitly added as deviating from the `.reuse/dep5` config file using the `Files-Excluded` field. Excluding the file `/pkg/foo.go` and `pkg/bar.go` from the general rule to add the Apache 2.0 license to all files, would look like this:
 
-```
+```bash
 Files: **
 Copyright: 2022 SAP SE or an SAP affiliate company and Open Component Model contributors
 License: Apache-2.0
 Files-Excluded: /pkg/foo.go pkg/bar.go 
 ```
-
 
 ### Pull Request Checklist
 
@@ -101,13 +99,14 @@ Files-Excluded: /pkg/foo.go pkg/bar.go
 - Update documentation (either in the [docs](https://github.com/open-component-model/ocm-spec) or README) that cover your changes.
 - Add unit tests and integration tests to cover your changes.
 - Ensure that the linter and all unit and integration tests are successful.
-- [Bonus] Backfill tests/documentation to make the world a better place.
+- **Bonnus**: Backfill tests/documentation to make the world a better place.
 
 ### Pull Request Process
+
 1. **Create PR.** Please refer to the [Pull Request Checklist](#pull-request-checklist) before marking a PR as ready to be reviewed.
 2. **Triage.** A maintainer will triage the PR by adding the appropriate label for the issue.
 3. **Assign reviews.** A maintainer will be assigned to review the changes in the PR.
-4. **Review.** At least 2 maintainers will review the PR. Checkout the [style guidelines](#styyle-guidelines) section for some things reviewers will look for. Reviewers are expected to add comments to the code changes introduced in the PR.
+4. **Review.** At least 2 maintainers will review the PR. Checkout the [style guidelines](#style-guidelines) section for some things reviewers will look for. Reviewers are expected to add comments to the code changes introduced in the PR.
 5. **Address comments.** The PR owner should address the reviewers' comments by answering questions or making changes to the code. Once changes are applied, the PR owner should let the reviewer know, for example, by replying to the comments with `Done` and requesting another review from the reviewer. If the reviewer approves of the answer and/or changes, they can resolve the comment. Otherwise, they will follow-up with a new comment.
 6. **Approve/Merge.** Once all comments are resolved, a PR must be approved by at least two reviewers who are maintainers of the code. After that, the PR ownder can merge the PR. If the PR was opened by a community contributor, they should wait for a maintainer to merge the PR.
 
