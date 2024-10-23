@@ -1,0 +1,36 @@
+name: 'Mark stale issues and PRs'
+on:
+  workflow_call:
+    inputs:
+      days-before-stale:
+        description: 'Number of days of inactivity before an issue is marked as stale'
+        required: false
+        default: '90'
+        type: number
+      days-before-close:
+        description: 'Number of days of inactivity before a stale issue is closed (-1 to disable closing)'
+        required: false
+        default: '-1'
+        type: number
+      stale-label:
+        description: 'Label to add to stale issues and PRs'
+        required: false
+        default: 'lifecycle/stale'
+        type: string
+
+permissions:
+  contents: write # only for delete-branch option
+  issues: write
+  pull-requests: write
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          stale-issue-message: 'This issue was marked as stale because it has not had recent activity.'
+          stale-pr-message: 'This pull request was marked as stale because it has not had recent activity.'
+          stale-issue-label: ${{ inputs.stale-label }}
+          stale-pr-label: ${{ inputs.stale-label }}
+          days-before-close: ${{ inputs.days-before-close }}
+          days-before-stale: ${{ inputs.days-before-stale }}
