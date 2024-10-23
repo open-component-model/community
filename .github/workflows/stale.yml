@@ -19,7 +19,7 @@ on:
         type: string
 
 permissions:
-  contents: write # only for delete-branch option
+  contents: read # only for delete-branch option we would need write
   issues: write
   pull-requests: write
 jobs:
