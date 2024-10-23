@@ -6,12 +6,12 @@ on:
         description: 'Number of days of inactivity before an issue is marked as stale'
         required: false
         default: '90'
-        type: number
+        type: string
       days-before-close:
         description: 'Number of days of inactivity before a stale issue is closed (-1 to disable closing)'
         required: false
         default: '-1'
-        type: number
+        type: string
       stale-label:
         description: 'Label to add to stale issues and PRs'
         required: false
