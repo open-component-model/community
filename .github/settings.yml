@@ -58,6 +58,7 @@ repository:
   enable_vulnerability_alerts: true
 
 # Labels: define labels for Issues and Pull Requests
+# cat labels.json | yq eval -P '.[] | [pick(["name", "color", "description"])]'
 labels:
 - name: area/cicd
   color: 0052cc
@@ -87,33 +88,27 @@ labels:
   color: 0052cc
   description: Testing related
 
-- name: component/MPAS
-  color: 25399e
-  description: ""
 - name: component/ocm-cli
   color: 25399e
   description: OCM Command Line Interface
 - name: component/ocm-controllers
   color: 25399e
   description: OCM Controllers
-- name: component/ocm-core
-  color: 25399e
-  description: ""
 - name: component/ocm-spec
   color: 25399e
-  description: ""
+  description: Open Component Model Specification
 - name: component/ocm-website
   color: 25399e
   description: https://ocm.software/
 - name: component/vscode-extension
   color: 25399e
-  description: ""
+  description: MS Visual Studio Code OCM Extension
 
 - name: kind/bug
   color: B60205
   description: Bug
 - name: kind/fix
-  color: B60205
+  color: c7def8
   description: Bug fix
 - name: kind/feature
   color: c7def8
@@ -130,27 +125,65 @@ labels:
 - name: kind/dependency
   color: c7def8
   description: dependency update, etc.
+- name: kind/documentation
+  color: c7def8
+  description: Documentation update, etc.
 - name: kind/refactor
   color: c7def8
   description: refactoring, maintenance, etc.
+- name: kind/skip-release-notes
+  color: c7def8
+  description: Pull request will not appear in release notes
 
 - name: lifecycle/icebox
   color: e5fefc
   description: Temporarily on hold (will not age; may have dependencies, lack priority, miss feedback, etc.)
 - name: lifecycle/rotten
-  color: "795548"
+  color: e5fefc
   description: Nobody worked on this for 12 months (final aging stage)
 - name: lifecycle/stale
-  color: ce7925
+  color: e5fefc
   description: Nobody worked on this for 6 months (will further age)
+- name: lifecycle/duplicate
+  color: e5fefc
+  description: Duplicate of another issue or PR
 
-- name: needs/help
+- name: dev/help
   color: fef2c0
   description: Needs help by someone else
+- name: dev/blocked
+  color: fef2c0
+  description: Needs help by someone else
+- name: dev/cant-reproduce
+  color: fef2c0
+  description: Cannot reproduce the issue
+- name: dev/wont-fix
+  color: fef2c0
+  description: Will not fix the issue
+
+- name: size/xs
+  color: bfdadc
+  description: Extra small
+- name: size/s
+  color: bfdadc
+  description: Small
+- name: size/m
+  color: bfdadc
+  description: Medium
+- name: size/l
+  color: bfdadc
+  description: Large
+- name: size/xl
+  color: bfdadc
+  description: Extra large
 
 - name: BREAKING CHANGE!!!
-  color: "5319e7"
-  description: Breaking change
+  color: B60205
+  description: Breaking change in API or ocm-cli or spec
+
+- name: do-not-merge
+  color: B60205
+  description: Do not merge this PR yet!
 
 # Milestones: define milestones for Issues and Pull Requests
 milestones:
