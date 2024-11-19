@@ -146,7 +146,7 @@ labels:
   color: e5fefc
   description: Duplicate of another issue or PR
 ## The different states of an issue or pull request for easier collaboration
-- name: dev/help
+- name: dev/help-wanted
   color: fef2c0
   description: Needs help by someone else
 - name: dev/blocked
