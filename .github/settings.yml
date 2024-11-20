@@ -33,7 +33,7 @@ repository:
   # Either `true` to allow squash-merging pull requests, or `false` to prevent squash-merging.
   allow_squash_merge: true
   # The default value for a squash merge commit title: PR_TITLE, COMMIT_OR_PR_TITLE 
-  squash_merge_commit_title: COMMIT_OR_PR_TITLE
+  squash_merge_commit_title: PR_TITLE
   # The default value for a squash merge commit message: PR_BODY, COMMIT_MESSAGES, BLANK
   squash_merge_commit_message: PR_BODY
   # Either true to allow auto-merge on pull requests, or false to disallow auto-merge.
@@ -143,7 +143,7 @@ labels:
   color: e5fefc
   description: Duplicate of another issue or PR
 ## The different states of an issue or pull request for easier collaboration
-- name: dev/help
+- name: dev/help-wanted
   color: fef2c0
   description: Needs help by someone else
 - name: dev/blocked
