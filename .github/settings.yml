@@ -181,7 +181,7 @@ labels:
   color: bfdadc
   description: Extra large
 ## Breaking changes, which will require special attention or follow-up actions
-- name: BREAKING CHANGE!!!
+- name: "!BREAKING-CHANGE!"
   color: B60205
   description: Breaking change in API or ocm-cli or spec
 ## PRs that should not be merged yet (although they are ready), because they are waiting for something else to be done first. If you are still working on the PR, put it in 'draft' mode instead or use project board status 'in pro'.
