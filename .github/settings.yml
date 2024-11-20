@@ -64,6 +64,7 @@ labels:
 - name: area/community
   color: 0052cc
   description: Community related
+  oldname: area/open-source
 - name: area/compliance
   color: 0052cc
   description: Compliance related
@@ -82,6 +83,10 @@ labels:
 - name: area/security
   color: 0052cc
   description: Security relevant
+- name: area/network
+  color: 0052cc
+  description: Network related
+  oldname: area/networking
 - name: area/testing
   color: 0052cc
   description: Testing related
@@ -104,6 +109,7 @@ labels:
 - name: component/github-actions
   color: 25399e
   description: Changes on GitHub Actions or within `.github/` directory
+  oldname: github-actions
 ## The different kinds of issues and pull requests - will be used for release notes grouping
 - name: kind/bug
   color: B60205
@@ -111,24 +117,35 @@ labels:
 - name: kind/fix
   color: c7def8
   description: Bug fix
+  oldname: kind/bugfix
 - name: kind/feature
   color: c7def8
   description: new feature, enhancement, improvement, extension
+- name: kind/task
+  color: c7def8
+  description: small task, normally part of feature or epic
+  oldname: kind/enhancement
 - name: kind/epic
   color: c7def8
   description: Large multi-story topic
+- name: kind/good-first-issue
+  color: 7057ff
+  description: Good for newcomers
+  oldname: good first issue
 - name: kind/poc
   color: c7def8
   description: Proof of Concept or Prototype
 - name: kind/chore
   color: c7def8
   description: chore, maintenance, etc.
+  oldname: chore
 - name: kind/dependency
   color: c7def8
   description: dependency update, etc.
 - name: kind/documentation
   color: c7def8
   description: Documentation update, etc.
+  oldname: documentation
 - name: kind/refactor
   color: c7def8
   description: refactoring, maintenance, etc.
