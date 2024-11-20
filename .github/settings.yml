@@ -98,9 +98,6 @@ labels:
 - name: component/ocm-website
   color: 25399e
   description: https://ocm.software/
-- name: component/vscode-extension
-  color: 25399e
-  description: MS Visual Studio Code OCM Extension
 ## The different kinds of issues and pull requests - will be used for release notes grouping
 - name: kind/bug
   color: B60205
