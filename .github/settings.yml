@@ -86,6 +86,9 @@ labels:
   color: 0052cc
   description: Testing related
 ## The different components of the project
+- name: component/ocm-core
+  color: 25399e
+  description: Open Component Model Core aka. go API
 - name: component/ocm-cli
   color: 25399e
   description: OCM Command Line Interface
