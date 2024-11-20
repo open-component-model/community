@@ -129,6 +129,9 @@ labels:
 - name: kind/refactor
   color: c7def8
   description: refactoring, maintenance, etc.
+- name: kind/deprecation
+  color: c7def8
+  description: whenever something gets deprecated
 - name: kind/skip-release-notes
   color: c7def8
   description: Pull request will not appear in release notes
