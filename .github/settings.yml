@@ -71,6 +71,7 @@ labels:
 - name: area/documentation
   color: 0052cc
   description: Documentation related
+  oldname: component/ocm-website
 - name: area/ipcei
   color: 0052cc
   description: Important Project of Common European Interest
@@ -142,6 +143,7 @@ labels:
 - name: kind/dependency
   color: c7def8
   description: dependency update, etc.
+  oldname: dependencies
 - name: kind/documentation
   color: c7def8
   description: Documentation update, etc.
