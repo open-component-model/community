@@ -91,6 +91,7 @@ labels:
 - name: area/testing
   color: 0052cc
   description: Testing related
+  oldname: testing
 ## The different components of the project
 - name: component/ocm-core
   color: 25399e
@@ -183,6 +184,10 @@ labels:
 - name: dev/wont-fix
   color: fef2c0
   description: Will not fix the issue
+- name: dev/second-opinion
+  color: fef2c0
+  description: PR or issue needs a second opinion, is open for discussion
+  oldname: second-opinion
 ## The different sizes of an issue or pull request
 - name: size/xs
   color: bfdadc
