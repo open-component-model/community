@@ -123,10 +123,11 @@ labels:
 - name: kind/feature
   color: c7def8
   description: new feature, enhancement, improvement, extension
+  oldname: kind/enhancement
 - name: kind/task
   color: c7def8
   description: small task, normally part of feature or epic
-  oldname: kind/enhancement
+  oldname: task
 - name: kind/epic
   color: c7def8
   description: Large multi-story topic
