@@ -113,13 +113,10 @@ labels:
   description: Changes on GitHub Actions or within `.github/` directory
   oldname: github-actions
 ## The different kinds of issues and pull requests - will be used for release notes grouping
-- name: kind/bug
+- name: kind/bugfix
   color: B60205
   description: Bug
-- name: kind/fix
-  color: c7def8
-  description: Bug fix
-  oldname: kind/bugfix
+  oldname: kind/bug
 - name: kind/feature
   color: c7def8
   description: new feature, enhancement, improvement, extension
@@ -127,7 +124,7 @@ labels:
 - name: kind/task
   color: c7def8
   description: small task, normally part of feature or epic
-  oldname: task
+  oldname: Task
 - name: kind/epic
   color: c7def8
   description: Large multi-story topic
