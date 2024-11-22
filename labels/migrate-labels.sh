@@ -6,15 +6,15 @@
 # 
 # 2. Removes ALL unused labels from a GitHub repository!
 #
-# Usage: ./migrate-labels.sh [ghp_TOKEN]
+# Usage: ./migrate-labels.sh [git-ocm-repo] [ghp_TOKEN]
 #
 
 set -e
 
 # Required environment variables
-GITHUB_TOKEN="$1"
+GITHUB_REPO="$1"
+GITHUB_TOKEN="$2"
 GITHUB_ORG="open-component-model"
-GITHUB_REPO="ocm-workpackages"
 
 # Array to store all labels
 labels=()
@@ -129,17 +129,30 @@ migrate_label() {
     local old_label="$1"
     local new_label="$2"
     local encoded_old_label=$(urlencode "$old_label")
+    local page=1
+    local per_page=100
 
-    # FIXME: paging?
-    response=$(curl -sSL -H "Accept: application/vnd.github.v3+json" \
-                -H "Authorization: token ${GITHUB_TOKEN}" \
-                "https://api.github.com/repos/${GITHUB_ORG}/${GITHUB_REPO}/issues?labels=${encoded_old_label}")
+    while :; do
+        response=$(curl -sSL -H "Accept: application/vnd.github.v3+json" \
+                    -H "Authorization: token ${GITHUB_TOKEN}" \
+                    "https://api.github.com/repos/${GITHUB_ORG}/${GITHUB_REPO}/issues?labels=${encoded_old_label}&per_page=${per_page}&page=${page}")
 
-    issue_numbers=$(echo "$response" | jq -r '.[].number')
+        issue_numbers=$(echo "$response" | jq -r '.[].number')
+        if [ -z "$issue_numbers" ]; then
+            break
+        fi
 
-    for issue_number in $issue_numbers; do
-        add_label_to_issue "$issue_number" "$new_label"
-        remove_label_from_issue "$issue_number" "$old_label"
+        for issue_number in $issue_numbers; do
+            add_label_to_issue "$issue_number" "$new_label"
+            remove_label_from_issue "$issue_number" "$old_label"
+        done
+
+        # Check if we have reached the last page
+        if [ $(echo "$response" | jq 'length') -lt $per_page ]; then
+            break
+        fi
+
+        page=$((page + 1))
     done
 }
 
@@ -167,8 +180,6 @@ rename_label() {
     else
         echo "Failed to rename label '${old_label}' to '${new_label}'."
     fi
-
-    echo "$response"
 }
 
 # Read the label mappings from the JSON file
