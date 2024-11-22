@@ -64,14 +64,12 @@ labels:
 - name: area/community
   color: 0052cc
   description: Community related
-  oldname: area/open-source
 - name: area/compliance
   color: 0052cc
   description: Compliance related
 - name: area/documentation
   color: 0052cc
   description: Documentation related
-  oldname: component/ocm-website
 - name: area/ipcei
   color: 0052cc
   description: Important Project of Common European Interest
@@ -87,11 +85,9 @@ labels:
 - name: area/network
   color: 0052cc
   description: Network related
-  oldname: area/networking
 - name: area/testing
   color: 0052cc
   description: Testing related
-  oldname: testing
 ## The different components of the project
 - name: component/ocm-core
   color: 25399e
@@ -111,42 +107,31 @@ labels:
 - name: component/github-actions
   color: 25399e
   description: Changes on GitHub Actions or within `.github/` directory
-  oldname: github-actions
 ## The different kinds of issues and pull requests - will be used for release notes grouping
 - name: kind/bugfix
   color: B60205
   description: Bug
-  oldname: kind/bug
 - name: kind/feature
   color: c7def8
   description: new feature, enhancement, improvement, extension
-  oldname: kind/enhancement
 - name: kind/task
   color: c7def8
   description: small task, normally part of feature or epic
-  oldname: Task
 - name: kind/epic
   color: c7def8
   description: Large multi-story topic
 - name: kind/good-first-issue
   color: 7057ff
   description: Good for newcomers
-  oldname: good first issue
 - name: kind/poc
   color: c7def8
   description: Proof of Concept or Prototype
 - name: kind/chore
   color: c7def8
   description: chore, maintenance, etc.
-  oldname: chore
 - name: kind/dependency
   color: c7def8
   description: dependency update, etc.
-  oldname: dependencies
-- name: kind/documentation
-  color: c7def8
-  description: Documentation update, etc.
-  oldname: documentation
 - name: kind/refactor
   color: c7def8
   description: refactoring, maintenance, etc.
@@ -185,7 +170,6 @@ labels:
 - name: dev/second-opinion
   color: fef2c0
   description: PR or issue needs a second opinion, is open for discussion
-  oldname: second-opinion
 ## The different sizes of an issue or pull request
 - name: size/xs
   color: bfdadc
