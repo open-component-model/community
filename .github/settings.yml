@@ -194,6 +194,9 @@ labels:
 - name: do-not-merge
   color: B60205
   description: Do not merge this PR yet!
+- name: hint/Fingerspitzengefühl
+  color: FF00FF
+  description: Needs a little bit of "Fingerspitzengefühl" - aka. be careful when implementing
 
 # Milestones: define milestones for Issues and Pull Requests
 milestones:
