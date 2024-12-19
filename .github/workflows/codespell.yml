@@ -1,0 +1,29 @@
+name: Codespell
+
+on:
+  workflow_call:
+    inputs:
+      codespell-ignore:
+        description: 'Path to text file with words to be ignored'
+        required: true
+        default: '.github/config/wordlist.txt'
+        type: string
+      codespell-files-glob:
+        description: 'Files match pattern'
+        required: true
+        default: './**/*.y*ml ./**/*.go'
+        type: string
+
+jobs:
+  codespell:
+    name: codespell
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install codespell
+        run: pip install codespell==2.3.0
+      - name: Check code for common misspellings
+        run: |
+          shopt -s globstar
+          codespell --count --ignore-words=${{ inputs.codespell-ignore }} ${{ inputs.codespell-files-glob }}
