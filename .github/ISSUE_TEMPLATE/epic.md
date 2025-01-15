@@ -36,7 +36,7 @@ List the main user stories that make up this epic. Just mention the number of th
 
 **Acceptance Criteria**
 
-List the high-level conditions that must be met for this epic to be considered complete
+List the high-level conditions that must be met for this epic to be considered complete.
 
 - [ ] Criteria 1
 - [ ] Criteria 2
