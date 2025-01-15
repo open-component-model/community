@@ -4,7 +4,7 @@
 *       @open-component-model/Maintainers
 
 # Especially for the shared git-repository settings in .github directory
-/.github/            @open-component-model/Admins
+/.github/            @open-component-model/Maintainers
 
 # Owners for specific directories
 /.github/workflows/  @open-component-model/Maintainers
