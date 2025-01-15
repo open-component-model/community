@@ -203,7 +203,7 @@ milestones:
 - title: 2024-Q4
   #description: milestone-description
   # The state of the milestone. Either `open` or `closed`
-  state: open
+  state: closed
 
 - title: 2025-Q1
   state: open
@@ -215,6 +215,9 @@ milestones:
   state: open
 
 - title: 2025-Q4
+  state: open
+
+- title: 2026-Q1
   state: open
 
 # Collaborators: give specific users access to this repository.
