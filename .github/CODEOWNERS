@@ -6,8 +6,10 @@
 # Especially for the shared git-repository settings in .github directory
 /.github/            @open-component-model/Admins
 
-# Owners for specific directories
+# Owners for specific directories and files
 /.github/workflows/  @open-component-model/Maintainers
+/.github/ISSUE_TEMPLATE/  @open-component-model/Maintainers
+/.github/pull_request_template.md  @open-component-model/Maintainers
 
 # Owners for specific file types
 #*.md    @<org>/<team>
