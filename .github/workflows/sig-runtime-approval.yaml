@@ -1,0 +1,190 @@
+name: SIG Runtime Approval Gate
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  detect-new-project:
+    name: "Detect New Project Submission"
+    runs-on: ubuntu-latest
+    outputs:
+      is_new_project: ${{ steps.detect.outputs.is_new_project }}
+      project_name: ${{ steps.detect.outputs.project_name }}
+      project_path: ${{ steps.detect.outputs.project_path }}
+      missing_files: ${{ steps.detect.outputs.missing_files }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Detect new project directories
+        id: detect
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const { execSync } = require('child_process');
+
+            const base = context.payload.pull_request.base.sha;
+            const head = context.payload.pull_request.head.sha;
+
+            const diff = execSync(
+              `git diff --name-only --diff-filter=A ${base}...${head}`,
+              { encoding: 'utf-8' }
+            );
+
+            const newFiles = diff.split('\n').filter(Boolean);
+            const newProjectDirs = [...new Set(
+              newFiles
+                .filter(f => f.startsWith('projects/') && f.split('/').length >= 3)
+                .map(f => f.split('/').slice(0, 2).join('/'))
+            )];
+
+            if (newProjectDirs.length === 0) {
+              core.setOutput('is_new_project', 'false');
+              core.setOutput('project_name', '');
+              core.setOutput('project_path', '');
+              core.setOutput('missing_files', '');
+              console.log('No new project directories detected.');
+              return;
+            }
+
+            // Policy: one new project per PR
+            const projectPath = newProjectDirs[0];
+            const projectName = projectPath.split('/')[1];
+            core.setOutput('is_new_project', 'true');
+            core.setOutput('project_name', projectName);
+            core.setOutput('project_path', projectPath);
+            console.log(`New project detected: ${projectName} at ${projectPath}`);
+
+            // Validate required files
+            const required = ['README.md', 'OWNERS.md', 'Taskfile.yml'];
+            const missing = required.filter(f => {
+              try {
+                execSync(`git show ${head}:${projectPath}/${f}`, { stdio: 'ignore' });
+                return false;
+              } catch {
+                return true;
+              }
+            });
+
+            // Validate go.mod module path
+            try {
+              const gomod = execSync(`git show ${head}:${projectPath}/go.mod`, { encoding: 'utf-8' });
+              const moduleLine = gomod.split('\n').find(l => l.startsWith('module '));
+              if (moduleLine) {
+                const modulePath = moduleLine.replace('module ', '').trim();
+                const expectedPrefix = `ocm.software/community/${projectName}`;
+                if (!modulePath.startsWith(expectedPrefix)) {
+                  missing.push(`go.mod (module path must start with \`${expectedPrefix}\`, got: \`${modulePath}\`)`);
+                }
+              } else {
+                missing.push('go.mod (no module declaration found)');
+              }
+            } catch {
+              missing.push('go.mod');
+            }
+
+            core.setOutput('missing_files', missing.join(', '));
+            console.log(`Missing files: ${missing.join(', ') || 'none'}`);
+
+  validate-submission:
+    name: "Validate Submission"
+    needs: detect-new-project
+    if: needs.detect-new-project.outputs.is_new_project == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Fail if required files are missing
+        if: needs.detect-new-project.outputs.missing_files != ''
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const missing = '${{ needs.detect-new-project.outputs.missing_files }}';
+            const projectPath = '${{ needs.detect-new-project.outputs.project_path }}';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `## Submission Validation Failed\n\n` +
+                    `The new project at \`${projectPath}\` is missing required files:\n\n` +
+                    missing.split(', ').map(f => `- ${f}`).join('\n') +
+                    `\n\nPlease see [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md) for requirements.`,
+            });
+            core.setFailed(`Missing required files: ${missing}`);
+
+      - name: Post SIG Runtime review request
+        if: needs.detect-new-project.outputs.missing_files == ''
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const projectName = '${{ needs.detect-new-project.outputs.project_name }}';
+            const projectPath = '${{ needs.detect-new-project.outputs.project_path }}';
+
+            // Idempotent: skip if already posted
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+            if (comments.data.some(c => c.body.includes('SIG Runtime Review Required') && c.user.type === 'Bot')) {
+              console.log('Review request already posted. Skipping.');
+              return;
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: ['ext.ocm.software/needs-review'],
+            });
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `## SIG Runtime Review Required\n\n` +
+                    `This PR introduces a new community project: **\`${projectName}\`** at \`${projectPath}\`.\n\n` +
+                    `A SIG Runtime voting member must apply the \`ext.ocm.software/approved\` label ` +
+                    `before this PR can be merged.\n\n` +
+                    `cc @open-component-model/sig-runtime\n\n` +
+                    `**Reviewer checklist:**\n` +
+                    `- [ ] Project scope is compatible with OCM\n` +
+                    `- [ ] Module path follows \`ocm.software/community/${projectName}\` convention\n` +
+                    `- [ ] \`OWNERS.md\` lists at least one maintainer willing to maintain this project\n` +
+                    `- [ ] No obvious security or licensing concerns\n` +
+                    `- [ ] Tests pass in CI\n\n` +
+                    `_To approve, apply the \`ext.ocm.software/approved\` label to this PR._`,
+            });
+
+  check-approval:
+    name: "Check SIG Runtime Approval"
+    needs: detect-new-project
+    if: needs.detect-new-project.outputs.is_new_project == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for ext.ocm.software/approved label
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            if (!labels.includes('ext.ocm.software/approved')) {
+              core.setFailed(
+                'This PR introduces a new project and requires the `ext.ocm.software/approved` ' +
+                'label from a SIG Runtime voting member before it can be merged.'
+              );
+            } else {
+              console.log('SIG Runtime approval confirmed.');
+            }

@@ -1,19 +1,21 @@
-# Default owners for everything in the repo.
-# Unless a later match takes precedence, the Maintainers team
-# will be requested for review when someone opens a pull request.
-*       @open-component-model/Maintainers
+# Default: SIG Runtime reviews everything
+*                                 @open-component-model/sig-runtime
 
-# Changes on repository settings require admin permissions
-/.github/settings.yml   @open-component-model/admins
-/.github/CODEOWNERS     @open-component-model/admins
+# Repo settings — admins only
+/.github/settings.yml             @open-component-model/admins
+/.github/CODEOWNERS               @open-component-model/admins
 
-# Owners for specific directories
-#/docs/  @<org>/<team>
-#/src/   @<org>/<team>
+# Governance docs — TSC + SIG Runtime leads
+/GOVERNANCE.md                    @open-component-model/tsc @skarlso @fabianburth
+/NAMING.md                        @open-component-model/tsc @skarlso @fabianburth
+/CONTRIBUTING.md                  @open-component-model/tsc @skarlso @fabianburth
 
-# Owners for specific file types
-#*.md    @<org>/<team>
-#*.go    @<org>/<team>
+# Core CI — SIG Runtime only (project owners cannot modify repo-wide workflows)
+/.github/workflows/               @open-component-model/sig-runtime
+/.github/config/                  @open-component-model/sig-runtime
 
-# Individual users as owners, e.g. a lead maintainer for a specific component:
-# /src/critical-component/   @lead-maintainer-username
+# Per-project entries are added here by SIG Runtime after each project merges.
+#
+# Example (added post-merge for each approved project):
+# /projects/my-plugin/            @alice @bob
+# /projects/my-plugin/OWNERS.md   @open-component-model/sig-runtime
