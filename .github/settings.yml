@@ -1,0 +1,11 @@
+# These settings are synced to GitHub by https://probot.github.io/apps/settings/
+
+# see: https://github.com/open-component-model/.github/blob/main/.github/settings.yml
+_extends: .github
+
+repository:
+  topics: ocm, open-component-model, k8s-controller
+
+labels:
+- name: repo/<your-project>
+  color: bfd4f2
