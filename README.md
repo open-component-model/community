@@ -1,17 +1,44 @@
-## Contributing
+# OCM Community
 
-Code contributions, feature requests, bug reports, and help requests are very welcome. Please refer to the
-[Contributing Guide in the Community repository](https://github.com/open-component-model/.github/blob/main/CONTRIBUTING.md)
-for more information on how to contribute to OCM.
+Community-contributed extensions, integrations, and tools for the
+[Open Component Model](https://ocm.software).
 
-OCM follows the [NeoNephos Code of Conduct](https://github.com/neonephos/.github/blob/main/CODE_OF_CONDUCT.md).
+## What is this?
+
+This repository hosts community projects that extend OCM but live outside the core monorepo.
+All projects here have been reviewed and approved by the **TSC** before merge.
+
+## Projects
+
+Community projects live directly at the root of this repository. Each project is an
+independent directory with its own `README.md` and `OWNERS.md`.
+
+## Contributing a New Project
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full submission process. In short:
+
+1. Create `<your-project-name>/` at the root with the required files
+2. Open a PR — the workflow will notify the TSC for review
+3. After TSC approval (via CODEOWNERS review) the PR can merge
+
+## Governance
+
+This repository is governed by [GOVERNANCE.md](./GOVERNANCE.md) under the oversight of
+the **TSC**. The namespace for all community extensions is defined in
+[NAMING.md](./NAMING.md).
+
+## Build Tool
+
+The OCM core monorepo uses [Task](https://taskfile.dev/) as its build runner.
+Community projects are encouraged (but not required) to do the same.
 
 ## Licensing
 
-Please see our [LICENSE](LICENSE) for copyright and license information.
-Detailed information including third-party components and their licensing/copyright information is available
-[via the REUSE tool](https://api.reuse.software/info/github.com/open-component-model/open-component-model).
+All projects in the community repository must be licensed under Apache-2.0, consistent with the
+[OCM Technical Charter](https://github.com/open-component-model/open-component-model/blob/main/docs/steering/CHARTER.md).
+
+OCM follows the [NeoNephos Code of Conduct](https://github.com/neonephos/.github/blob/main/CODE_OF_CONDUCT.md).
 
 ---
 
-<p align="center"><img alt="Bundesministerium für Wirtschaft und Energie (BMWE)-EU funding logo" src="https://apeirora.eu/assets/img/BMWK-EU.png" width="400"/></p>information. Detailed information including third-party components and their licensing/copyright information is available [via the REUSE tool](https://api.reuse.software/info/github.com/open-component-model/<your-project>).
+<p align="center"><img alt="Bundesministerium für Wirtschaft und Energie (BMWE)-EU funding logo" src="https://apeirora.eu/assets/img/BMWK-EU.png" width="400"/></p>
