@@ -1,0 +1,365 @@
+{
+    "complianceSummary": [
+        {
+            "componentId": {
+                "name": "ocm.software/ocmcli",
+                "version": "0.40.0"
+            },
+            "entries": [
+                {
+                    "type": "finding/crypto",
+                    "source": "crypto",
+                    "categorisation": "not-standard-compliant",
+                    "value": 8,
+                    "scanStatus": "ok"
+                },
+                {
+                    "type": "finding/license",
+                    "source": "bdba",
+                    "categorisation": "CLEAN",
+                    "value": 0,
+                    "scanStatus": "ok"
+                },
+                {
+                    "type": "finding/malware",
+                    "source": "clamav",
+                    "categorisation": "CLEAN",
+                    "value": 0,
+                    "scanStatus": "ok"
+                },
+                {
+                    "type": "finding/osid",
+                    "source": "osid",
+                    "categorisation": "CLEAN",
+                    "value": 0,
+                    "scanStatus": "ok"
+                },
+                {
+                    "type": "finding/sast",
+                    "source": "sast",
+                    "categorisation": "missing-linting",
+                    "value": 16,
+                    "scanStatus": "ok"
+                },
+                {
+                    "type": "finding/vulnerability",
+                    "source": "bdba",
+                    "categorisation": "CRITICAL",
+                    "value": 8,
+                    "scanStatus": "ok"
+                }
+            ],
+            "artefacts": [
+                {
+                    "artefact": {
+                        "component_name": "ocm.software/ocmcli",
+                        "component_version": "0.40.0",
+                        "artefact": {
+                            "artefact_name": "ocmcli",
+                            "artefact_type": "executable",
+                            "artefact_version": "0.40.0",
+                            "artefact_extra_id": {
+                                "architecture": "amd64",
+                                "os": "windows"
+                            }
+                        },
+                        "artefact_kind": "resource",
+                        "references": []
+                    },
+                    "entries": [
+                        {
+                            "type": "finding/crypto",
+                            "source": "crypto",
+                            "categorisation": "not-standard-compliant",
+                            "value": 8,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/license",
+                            "source": "bdba",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/malware",
+                            "source": "clamav",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/vulnerability",
+                            "source": "bdba",
+                            "categorisation": "CRITICAL",
+                            "value": 8,
+                            "scanStatus": "ok"
+                        }
+                    ]
+                },
+                {
+                    "artefact": {
+                        "component_name": "ocm.software/ocmcli",
+                        "component_version": "0.40.0",
+                        "artefact": {
+                            "artefact_name": "ocmcli",
+                            "artefact_type": "executable",
+                            "artefact_version": "0.40.0",
+                            "artefact_extra_id": {
+                                "architecture": "arm64",
+                                "os": "darwin"
+                            }
+                        },
+                        "artefact_kind": "resource",
+                        "references": []
+                    },
+                    "entries": [
+                        {
+                            "type": "finding/crypto",
+                            "source": "crypto",
+                            "categorisation": "not-standard-compliant",
+                            "value": 8,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/license",
+                            "source": "bdba",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/malware",
+                            "source": "clamav",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/vulnerability",
+                            "source": "bdba",
+                            "categorisation": "HIGH",
+                            "value": 4,
+                            "scanStatus": "ok"
+                        }
+                    ]
+                },
+                {
+                    "artefact": {
+                        "component_name": "ocm.software/ocmcli",
+                        "component_version": "0.40.0",
+                        "artefact": {
+                            "artefact_name": "ocmcli",
+                            "artefact_type": "executable",
+                            "artefact_version": "0.40.0",
+                            "artefact_extra_id": {
+                                "architecture": "amd64",
+                                "os": "darwin"
+                            }
+                        },
+                        "artefact_kind": "resource",
+                        "references": []
+                    },
+                    "entries": [
+                        {
+                            "type": "finding/crypto",
+                            "source": "crypto",
+                            "categorisation": "not-standard-compliant",
+                            "value": 8,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/license",
+                            "source": "bdba",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/malware",
+                            "source": "clamav",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/vulnerability",
+                            "source": "bdba",
+                            "categorisation": "HIGH",
+                            "value": 4,
+                            "scanStatus": "ok"
+                        }
+                    ]
+                },
+                {
+                    "artefact": {
+                        "component_name": "ocm.software/ocmcli",
+                        "component_version": "0.40.0",
+                        "artefact": {
+                            "artefact_name": "ocmcli",
+                            "artefact_type": "executable",
+                            "artefact_version": "0.40.0",
+                            "artefact_extra_id": {
+                                "architecture": "amd64",
+                                "os": "linux"
+                            }
+                        },
+                        "artefact_kind": "resource",
+                        "references": []
+                    },
+                    "entries": [
+                        {
+                            "type": "finding/crypto",
+                            "source": "crypto",
+                            "categorisation": "not-standard-compliant",
+                            "value": 8,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/license",
+                            "source": "bdba",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/malware",
+                            "source": "clamav",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/vulnerability",
+                            "source": "bdba",
+                            "categorisation": "HIGH",
+                            "value": 4,
+                            "scanStatus": "ok"
+                        }
+                    ]
+                },
+                {
+                    "artefact": {
+                        "component_name": "ocm.software/ocmcli",
+                        "component_version": "0.40.0",
+                        "artefact": {
+                            "artefact_name": "ocmcli",
+                            "artefact_type": "executable",
+                            "artefact_version": "0.40.0",
+                            "artefact_extra_id": {
+                                "architecture": "arm64",
+                                "os": "linux"
+                            }
+                        },
+                        "artefact_kind": "resource",
+                        "references": []
+                    },
+                    "entries": [
+                        {
+                            "type": "finding/crypto",
+                            "source": "crypto",
+                            "categorisation": "not-standard-compliant",
+                            "value": 8,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/license",
+                            "source": "bdba",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/malware",
+                            "source": "clamav",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/vulnerability",
+                            "source": "bdba",
+                            "categorisation": "HIGH",
+                            "value": 4,
+                            "scanStatus": "ok"
+                        }
+                    ]
+                },
+                {
+                    "artefact": {
+                        "component_name": "ocm.software/ocmcli",
+                        "component_version": "0.40.0",
+                        "artefact": {
+                            "artefact_name": "ocmcli-image",
+                            "artefact_type": "ociImage",
+                            "artefact_version": "0.40.0",
+                            "artefact_extra_id": {}
+                        },
+                        "artefact_kind": "resource",
+                        "references": []
+                    },
+                    "entries": [
+                        {
+                            "type": "finding/crypto",
+                            "source": "crypto",
+                            "categorisation": "not-standard-compliant",
+                            "value": 8,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/license",
+                            "source": "bdba",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/malware",
+                            "source": "clamav",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/osid",
+                            "source": "osid",
+                            "categorisation": "CLEAN",
+                            "value": 0,
+                            "scanStatus": "ok"
+                        },
+                        {
+                            "type": "finding/vulnerability",
+                            "source": "bdba",
+                            "categorisation": "HIGH",
+                            "value": 4,
+                            "scanStatus": "ok"
+                        }
+                    ]
+                },
+                {
+                    "artefact": {
+                        "component_name": "ocm.software/ocmcli",
+                        "component_version": "0.40.0",
+                        "artefact": {
+                            "artefact_name": "source",
+                            "artefact_type": "filesytem",
+                            "artefact_version": "0.40.0",
+                            "artefact_extra_id": {}
+                        },
+                        "artefact_kind": "source",
+                        "references": []
+                    },
+                    "entries": [
+                        {
+                            "type": "finding/sast",
+                            "source": "sast",
+                            "categorisation": "missing-linting",
+                            "value": 16,
+                            "scanStatus": "ok"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
