@@ -1,0 +1,52 @@
+version: '3'
+
+vars:
+  BINARY_NAME: odgcli
+  BUILD_DIR: bin
+
+tasks:
+  default:
+    desc: Build the binary
+    aliases: [build]
+    cmds:
+      - go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} .
+    sources:
+      - '**/*.go'
+      - go.mod
+      - go.sum
+      - exclude: '**/*_test.go'
+    generates:
+      - '{{.BUILD_DIR}}/{{.BINARY_NAME}}'
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./...
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - golangci-lint run ./...
+
+  fmt:
+    desc: Format code
+    cmds:
+      - gofmt -w .
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -rf {{.BUILD_DIR}}
+
+  check:
+    desc: Run all checks (fmt, vet, lint, test)
+    cmds:
+      - task: fmt
+      - task: vet
+      - task: lint
+      - task: test
