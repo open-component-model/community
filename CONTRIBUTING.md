@@ -1,7 +1,7 @@
 # Contributing
 
 > For general OCM contribution guidelines (commit format, DCO, code style, PR workflow),
-> see the [OCM Contributing Guide](https://github.com/open-component-model/.github/blob/main/CONTRIBUTING.md).
+> see the [OCM Contributing Guide](https://ocm.software/community/contributing/).
 > This document covers community-repo-specific requirements only.
 
 ## Proposing a New Project
