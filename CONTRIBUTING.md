@@ -16,12 +16,22 @@ Projects live directly at the root of this repository:
 └── ...
 ```
 
-### 2. Open a Pull Request
+### 2. Add a CODEOWNERS entry
+
+Your submission PR **must** include a CODEOWNERS change that assigns at least one
+maintainer to your project directory:
+
+```
+# In .github/CODEOWNERS — add at the end:
+/<your-project-name>/   @your-github-handle @optional-co-maintainer
+```
+
+### 3. Open a Pull Request
 
 - Title format: `feat: add <project-name>` ([Conventional Commits](https://www.conventionalcommits.org/))
 - The workflow will automatically post a review checklist comment tagging `@open-component-model/tsc`
 
-### 3. TSC Review
+### 4. TSC Review
 
 A TSC member reviews the submission against the checklist:
 
@@ -30,11 +40,6 @@ A TSC member reviews the submission against the checklist:
 - No security or licensing concerns
 
 TSC approval is enforced natively via CODEOWNERS — at least one TSC member must approve the PR before it can merge.
-
-### 4. Post-Merge
-
-The TSC will add a CODEOWNERS entry for your project directory, granting you and any
-listed co-maintainers review authority over `/<your-project-name>/`.
 
 ## Contributing to an Existing Project
 

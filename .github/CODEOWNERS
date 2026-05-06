@@ -4,7 +4,8 @@
 # Repo settings — admins only
 /.github/settings.yml             @open-component-model/admins
 
-# Per-project entries are added here by the TSC after each project merges.
+# Per-project entries are added by submitters as part of their project proposal PR.
+# The TSC reviews and approves these entries before merge.
 #
-# Example (added post-merge for each approved project):
+# Example:
 # /my-plugin/            @alice @bob
