@@ -5,8 +5,6 @@
 /.github/settings.yml             @open-component-model/admins
 
 # Per-project entries are added here by the TSC after each project merges.
-# OWNERS.md within each project remains TSC-controlled.
 #
 # Example (added post-merge for each approved project):
 # /my-plugin/            @alice @bob
-# /my-plugin/OWNERS.md   @open-component-model/tsc

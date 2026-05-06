@@ -11,7 +11,7 @@ All projects here have been reviewed and approved by the **TSC** before merge.
 ## Projects
 
 Community projects live directly at the root of this repository. Each project is an
-independent directory with its own `README.md` and `OWNERS.md`.
+independent directory with its own `README.md`.
 
 ## Contributing a New Project
 
