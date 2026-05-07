@@ -38,10 +38,11 @@ The TSC conducts periodic health checks on active projects. Projects inactive fo
 
 ## Code Ownership
 
-Project-specific CODEOWNERS entries are added by the TSC after a project merges.
-Project owners have full autonomy over their top-level project directory but cannot
-modify repository-wide CI workflows. The `OWNERS.md` file within each project remains
-TSC-controlled to prevent unilateral privilege escalation.
+Project submissions must include a CODEOWNERS entry assigning maintainers to the
+project directory. The TSC reviews and approves these entries as part of the
+submission PR. Project owners have full autonomy over their top-level project
+directory but cannot modify repository-wide CI workflows. Changes to CODEOWNERS
+remain TSC-controlled to prevent unilateral privilege escalation.
 
 ## Governance Evolution
 
