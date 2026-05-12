@@ -22,21 +22,21 @@ func newTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
 
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.URL.Path == "/auth":
+		switch r.URL.Path {
+		case "/auth":
 			http.SetCookie(w, &http.Cookie{Name: "bearer_token", Value: "test-token"})
 			w.WriteHeader(http.StatusOK)
 
-		case r.URL.Path == "/components/compliance-summary":
+		case "/components/compliance-summary":
 			serveFixture(w, "testdata/compliance_summary.json")
 
-		case r.URL.Path == "/ocm/component/responsibles":
+		case "/ocm/component/responsibles":
 			serveFixture(w, "testdata/responsibles.json")
 
-		case r.URL.Path == "/rescore":
+		case "/rescore":
 			serveFixture(w, "testdata/rescorings.json")
 
-		case r.URL.Path == "/artefacts/metadata/query/by-search-expression":
+		case "/artefacts/metadata/query/by-search-expression":
 			// Check if cursor is present in request body for pagination test.
 			var body MetadataQueryRequest
 			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -189,10 +189,10 @@ func TestGetRescorings(t *testing.T) {
 func TestGetRescorings_Cached(t *testing.T) {
 	var callCount atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.URL.Path == "/auth":
+		switch r.URL.Path {
+		case "/auth":
 			http.SetCookie(w, &http.Cookie{Name: "bearer_token", Value: "test-token"})
-		case r.URL.Path == "/rescore":
+		case "/rescore":
 			callCount.Add(1)
 			serveFixture(w, "testdata/rescorings.json")
 		}
@@ -268,10 +268,10 @@ func TestQueryMetadataBySearchExpression_Pagination(t *testing.T) {
 func TestQueryMetadataBySearchExpression_EarlyBreak(t *testing.T) {
 	var callCount atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.URL.Path == "/auth":
+		switch r.URL.Path {
+		case "/auth":
 			http.SetCookie(w, &http.Cookie{Name: "bearer_token", Value: "test-token"})
-		case r.URL.Path == "/artefacts/metadata/query/by-search-expression":
+		case "/artefacts/metadata/query/by-search-expression":
 			callCount.Add(1)
 			serveFixture(w, "testdata/metadata_query.json")
 		}
@@ -298,10 +298,10 @@ func TestQueryMetadataBySearchExpression_EarlyBreak(t *testing.T) {
 
 func TestAPIError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.URL.Path == "/auth":
+		switch r.URL.Path {
+		case "/auth":
 			http.SetCookie(w, &http.Cookie{Name: "bearer_token", Value: "test-token"})
-		case r.URL.Path == "/components/compliance-summary":
+		case "/components/compliance-summary":
 			w.WriteHeader(http.StatusForbidden)
 			_, _ = w.Write([]byte(`{"error": "insufficient permissions"}`))
 		}

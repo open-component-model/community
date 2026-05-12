@@ -59,7 +59,7 @@ func (c *Client) LoggedInUsername(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	var result struct {
 		Login string `json:"login"`
@@ -81,7 +81,7 @@ func (c *Client) ResolveUsername(ctx context.Context, username string) (string, 
 	if err != nil {
 		return "", fmt.Errorf("failed to perform request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	var result struct {
 		Name  string `json:"name"`

@@ -97,7 +97,7 @@ func NewClient(ctx context.Context, baseURL string, ghClient *github.Client, opt
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	// Extract cookies
 	var bearerToken string
@@ -193,7 +193,7 @@ func (c *Client) QueryMetadataBySearchExpressionRaw(ctx context.Context, criteri
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if err := checkResponse(resp); err != nil {
 		return nil, err
@@ -256,7 +256,7 @@ func (c *Client) GetComplianceSummary(ctx context.Context, componentName, compon
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if err := checkResponse(resp); err != nil {
 		return nil, err
@@ -309,7 +309,7 @@ func (c *Client) GetResponsibles(ctx context.Context, componentName string, opts
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if err := checkResponse(resp); err != nil {
 		return nil, err
@@ -372,7 +372,7 @@ func (c *Client) GetRescorings(ctx context.Context, artefact Artefact) ([]Findin
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if err := checkResponse(resp); err != nil {
 		return nil, err
