@@ -222,15 +222,15 @@ func (a *Application) openInEditor(findingCtx views.FindingContext) {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("CVE:                 %s\n", finding.Finding.CVE))
-	sb.WriteString(fmt.Sprintf("Package:             %s\n", finding.Finding.PackageName))
-	sb.WriteString(fmt.Sprintf("Component:           %s (%s)\n", artefact.ComponentName, artefact.ComponentVersion))
-	sb.WriteString(fmt.Sprintf("Artefact:            %s (%s)\n", artefact.Info.Name, artefact.Info.Version))
-	sb.WriteString(fmt.Sprintf("Original Severity:   %s\n", finding.Finding.Severity))
-	sb.WriteString(fmt.Sprintf("Suggested Severity:  %s\n", finding.Severity))
-	sb.WriteString(fmt.Sprintf("Discovery Date:      %s\n", finding.DiscoveryDate))
-	sb.WriteString(fmt.Sprintf("Due Date:            %s\n", dueDate))
-	sb.WriteString(fmt.Sprintf("Matching Rules:      %s\n", matchingRules))
+	fmt.Fprintf(&sb, "CVE:                 %s\n", finding.Finding.CVE)
+	fmt.Fprintf(&sb, "Package:             %s\n", finding.Finding.PackageName)
+	fmt.Fprintf(&sb, "Component:           %s (%s)\n", artefact.ComponentName, artefact.ComponentVersion)
+	fmt.Fprintf(&sb, "Artefact:            %s (%s)\n", artefact.Info.Name, artefact.Info.Version)
+	fmt.Fprintf(&sb, "Original Severity:   %s\n", finding.Finding.Severity)
+	fmt.Fprintf(&sb, "Suggested Severity:  %s\n", finding.Severity)
+	fmt.Fprintf(&sb, "Discovery Date:      %s\n", finding.DiscoveryDate)
+	fmt.Fprintf(&sb, "Due Date:            %s\n", dueDate)
+	fmt.Fprintf(&sb, "Matching Rules:      %s\n", matchingRules)
 	sb.WriteString("\n")
 	sb.WriteString("Description:\n")
 	sb.WriteString(finding.Finding.Summary)
@@ -238,22 +238,22 @@ func (a *Application) openInEditor(findingCtx views.FindingContext) {
 
 	comments, err := a.getCommentsForCVE(a.ctx, finding.Finding.CVE)
 	if err != nil {
-		sb.WriteString(fmt.Sprintf("Error loading comments: %s\n", err.Error()))
+		fmt.Fprintf(&sb, "Error loading comments: %s\n", err.Error())
 	} else if len(comments) == 0 {
 		sb.WriteString("No rescoring comments for this CVE\n")
 	} else {
-		sb.WriteString(fmt.Sprintf("Rescorings for %s in other components (%d total):\n\n", finding.Finding.CVE, len(comments)))
+		fmt.Fprintf(&sb, "Rescorings for %s in other components (%d total):\n\n", finding.Finding.CVE, len(comments))
 		for _, comment := range comments {
 			author, err := a.Clients.GHClient.ResolveUsername(a.ctx, comment.Author)
 			if err != nil {
 				author = comment.Author
 			}
-			sb.WriteString(fmt.Sprintf("- Author:     %s\n", author))
-			sb.WriteString(fmt.Sprintf("  Created at: %s\n", comment.CreatedAt.Format(time.RFC1123)))
-			sb.WriteString(fmt.Sprintf("  Component:  %s (%s)\n", comment.ComponentName, comment.ComponentVersion))
-			sb.WriteString(fmt.Sprintf("  Artefact:   %s@%s\n", comment.ArtefactName, comment.ArtefactVersion))
-			sb.WriteString(fmt.Sprintf("  Severity:   %s\n", comment.Severity))
-			sb.WriteString(fmt.Sprintf("  Comment:\n    %s\n\n", comment.Content))
+			fmt.Fprintf(&sb, "- Author:     %s\n", author)
+			fmt.Fprintf(&sb, "  Created at: %s\n", comment.CreatedAt.Format(time.RFC1123))
+			fmt.Fprintf(&sb, "  Component:  %s (%s)\n", comment.ComponentName, comment.ComponentVersion)
+			fmt.Fprintf(&sb, "  Artefact:   %s@%s\n", comment.ArtefactName, comment.ArtefactVersion)
+			fmt.Fprintf(&sb, "  Severity:   %s\n", comment.Severity)
+			fmt.Fprintf(&sb, "  Comment:\n    %s\n\n", comment.Content)
 		}
 	}
 
@@ -262,14 +262,14 @@ func (a *Application) openInEditor(findingCtx views.FindingContext) {
 		go a.showErrorModal(fmt.Errorf("failed to create temp file: %w", err))
 		return
 	}
-	defer os.Remove(tmpFile.Name())
+	defer os.Remove(tmpFile.Name()) //nolint:errcheck
 
 	if _, err := tmpFile.WriteString(sb.String()); err != nil {
-		tmpFile.Close()
+		tmpFile.Close() //nolint:errcheck
 		go a.showErrorModal(fmt.Errorf("failed to write temp file: %w", err))
 		return
 	}
-	tmpFile.Close()
+	tmpFile.Close() //nolint:errcheck
 
 	editor := os.Getenv("EDITOR")
 	if editor == "" {

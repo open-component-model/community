@@ -138,7 +138,7 @@ func (d *DetailsPane) formatComments(cve string, comments []ResolvedComment) str
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("[green::b]Rescorings for %s in other components (%d total):[white::-]\n", cve, len(comments)))
+	fmt.Fprintf(&sb, "[green::b]Rescorings for %s in other components (%d total):[white::-]\n", cve, len(comments))
 
 	displayed := len(comments)
 	if displayed > maxComments {
@@ -146,7 +146,7 @@ func (d *DetailsPane) formatComments(cve string, comments []ResolvedComment) str
 	}
 
 	for _, comment := range comments[:displayed] {
-		sb.WriteString(fmt.Sprintf(`
+		fmt.Fprintf(&sb, `
 [green]- Author:[white] %s
 [green]  Created at:[white] %s
 [green]  Component:[white] %s (%s)
@@ -154,11 +154,11 @@ func (d *DetailsPane) formatComments(cve string, comments []ResolvedComment) str
 [green]  Severity:[white] %s
 [green]  Comment:[white]
     %s
-`, comment.DisplayAuthor, comment.CreatedAt.Format(time.RFC1123), comment.ComponentName, comment.ComponentVersion, comment.ArtefactName, comment.ArtefactVersion, comment.Severity, comment.Content))
+`, comment.DisplayAuthor, comment.CreatedAt.Format(time.RFC1123), comment.ComponentName, comment.ComponentVersion, comment.ArtefactName, comment.ArtefactVersion, comment.Severity, comment.Content)
 	}
 
 	if len(comments) > maxComments {
-		sb.WriteString(fmt.Sprintf("\n[yellow::d]... and %d more comments not shown\n", len(comments)-maxComments))
+		fmt.Fprintf(&sb, "\n[yellow::d]... and %d more comments not shown\n", len(comments)-maxComments)
 	}
 
 	return sb.String()
