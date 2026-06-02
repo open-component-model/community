@@ -54,4 +54,4 @@ specification and directory naming rules.
 ## Code of Conduct
 
 All contributors must follow the
-[NeoNephos Code of Conduct](https://github.com/neonephos/.github/blob/main/CODE_OF_CONDUCT.md).
+[Linux Foundation EU Code of Conduct](https://linuxfoundation.eu/policies/code-of-conduct).

@@ -37,7 +37,7 @@ Community projects are encouraged (but not required) to do the same.
 All projects in the community repository must be licensed under Apache-2.0, consistent with the
 [OCM Technical Charter](https://github.com/open-component-model/open-component-model/blob/main/docs/steering/CHARTER.md).
 
-OCM follows the [NeoNephos Code of Conduct](https://github.com/neonephos/.github/blob/main/CODE_OF_CONDUCT.md).
+OCM follows the [Linux Foundation EU Code of Conduct](https://linuxfoundation.eu/policies/code-of-conduct).
 
 ---
 
