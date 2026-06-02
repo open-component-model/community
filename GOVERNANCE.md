@@ -58,7 +58,7 @@ Changes to this file require TSC approval (enforced via CODEOWNERS).
 ## Code of Conduct
 
 All participants must comply with the
-[NeoNephos Code of Conduct](https://github.com/neonephos/.github/blob/main/CODE_OF_CONDUCT.md).
+[Linux Foundation EU Code of Conduct](https://linuxfoundation.eu/policies/code-of-conduct).
 
 ## Licensing
 
