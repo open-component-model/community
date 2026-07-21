@@ -1,5 +1,9 @@
 components:
   - name: opendefense.cloud/arc
+    # Version is injected by the e2e harness via environment-variable
+    # substitution (the v2 CLI `add component-version` has no --version flag,
+    # unlike the v1 CLI). See test/e2e.sh which exports COMPONENT_VERSION.
+    version: ${COMPONENT_VERSION}
     provider:
       name: opendefense.cloud
     resources:
@@ -42,10 +46,15 @@ components:
       - name: helm-values-template
         type: yaml
         labels:
-        - name: "opendefense.cloud/helm/values-for"
+        - name: "ext.ocm.software/helm.values-for"
           value: helm-chart
         relation: local
         input:
           type: file
           path: values.yaml.tpl
+          # Explicit OCI-compliant media type. Without it the v2 CLI auto-detects
+          # "text/plain; charset=utf-8" for the file, whose "; charset=..." suffix
+          # violates the OCI image-manifest mediaType pattern and is rejected by
+          # zot's strict manifest validation on push.
+          mediaType: application/x-yaml
 

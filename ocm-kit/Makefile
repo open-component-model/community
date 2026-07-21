@@ -11,6 +11,25 @@ common.mk:
 
 DOCKER ?= docker
 
+# ---------------------------------------------------------------------------
+# OCM v2 CLI
+#
+# The e2e tests drive the OCM v2 CLI (module
+# ocm.software/open-component-model/cli). common.mk still ships a v1 OCM
+# install target (curl-based, sdk v1); we override the $(OCM) target here to
+# build the v2 CLI from source with `go install`. The install produces a binary
+# named "cli", which we relocate to $(OCM) (bin/go/ocm).
+OCM_V2_VERSION ?= v0.11.0
+OCM_V2_MODULE := ocm.software/open-component-model/cli
+
+$(OCM): $(LOCALGOBIN)
+	@test -s $(OCM) && grep -q "$(OCM_V2_VERSION)" $(LOCALGOBIN)/.ocm-version 2>/dev/null || { \
+		echo "Installing OCM v2 CLI $(OCM_V2_VERSION)..."; \
+		GOBIN=$(LOCALGOBIN) $(GO) install $(OCM_V2_MODULE)@$(OCM_V2_VERSION); \
+		mv $(LOCALGOBIN)/cli $(OCM); \
+		echo "$(OCM_V2_VERSION)" > $(LOCALGOBIN)/.ocm-version; \
+	}
+
 .PHONY: fmt
 fmt: $(GOLANGCI_LINT) ## Format code
 	$(GO) fmt ./...
