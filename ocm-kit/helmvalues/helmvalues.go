@@ -11,7 +11,6 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
-	"ocm.software/ocm/api/oci"
 	"ocm.software/ocm/api/ocm"
 	"ocm.software/ocm/api/ocm/compdesc"
 	v1 "ocm.software/ocm/api/ocm/compdesc/meta/v1"
@@ -34,15 +33,6 @@ type HelmValuesTemplate struct {
 	ResourceName    string
 	ResourceVersion string
 	TemplateContent string
-}
-
-// ImageReference is a representation of an OCI image reference with all its parts.
-// All fields are expected to be non-empty after parsing a reference (see ParseOCIRef) and Host might include a port.
-type ImageReference struct {
-	Host       string
-	Repository string
-	Tag        string
-	Digest     string
 }
 
 // PullSecrets is a collection of registry-to-secret mappings for pull secrets.
@@ -247,17 +237,7 @@ func GetRenderingInput(compVer ocm.ComponentVersionAccess) (*RenderingInput, err
 			return nil, fmt.Errorf("resources access contained invalid image reference: %w", err)
 		}
 
-		digest := ""
-		if parsedRef.Digest != nil {
-			digest = string(*parsedRef.Digest)
-		}
-
-		ociResourceMap[res.Meta().Name] = ImageReference{
-			Host:       parsedRef.Host,
-			Repository: parsedRef.Repository,
-			Tag:        derefOrEmpty(parsedRef.Tag),
-			Digest:     digest,
-		}
+		ociResourceMap[res.Meta().Name] = parsedRef
 	}
 
 	return &RenderingInput{
@@ -351,17 +331,6 @@ func Render(tmpl *HelmValuesTemplate, input *RenderingInput, opts ...RenderOptio
 	return result, nil
 }
 
-// ParseOCIRef parses an OCI image reference and extracts its components.
-// Returns an oci.RefSpec containing the parsed reference details.
-//
-// Parameters:
-//   - imageRef: The OCI image reference string (e.g., "registry.example.com/repo/image:tag")
-//
-// Returns an oci.RefSpec with the parsed reference, or an error if parsing fails.
-func ParseOCIRef(imageRef string) (oci.RefSpec, error) {
-	return oci.ParseRef(imageRef)
-}
-
 // matchLabelValue checks if a label value matches the target string.
 // Label values can be either json.RawMessage or string, so this function handles both types.
 //
@@ -407,20 +376,6 @@ func getFuncMap(pullSecrets PullSecrets) template.FuncMap {
 	}
 
 	return f
-}
-
-func (r ImageReference) String() string {
-	s := ""
-	if r.Host != "" {
-		s += r.Host + "/"
-	}
-	if r.Repository != "" {
-		s += r.Repository
-	}
-	if r.Tag != "" {
-		s += ":" + r.Tag
-	}
-	return s
 }
 
 func derefOrEmpty(s *string) string {

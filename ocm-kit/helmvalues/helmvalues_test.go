@@ -136,54 +136,6 @@ func TestRender(t *testing.T) {
 	}
 }
 
-// TestParseOCIRef tests the ParseOCIRef function with various OCI reference formats
-func TestParseOCIRef(t *testing.T) {
-	tests := []struct {
-		name     string
-		imageRef string
-		wantHost string
-		wantPath string
-		wantTag  string
-		wantErr  bool
-	}{
-		{
-			name:     "simple reference with tag",
-			imageRef: "http://localhost:5000/my-components/opendefensecloud/charts/arc:0.1.4@sha256:43d0a3045598b20ca8f39ac1b709e2a574d3a710d27aab5edf5b98ef40fe4d60",
-			wantHost: "localhost:5000",
-			wantPath: "my-components/opendefensecloud/charts/arc",
-			wantTag:  "0.1.4",
-			wantErr:  false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseOCIRef(tt.imageRef)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseOCIRef() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if err != nil {
-				return
-			}
-
-			// Verify the parsed reference has expected components
-			ref := got.String()
-			if ref == "" {
-				t.Errorf("ParseOCIRef() returned empty string")
-			}
-
-			// For valid references, check that basic parsing succeeded
-			if tt.wantTag != "" && !strings.Contains(ref, tt.wantTag) {
-				t.Errorf("ParseOCIRef() tag not found. Got: %s, Expected to contain: %s", ref, tt.wantTag)
-			}
-			if tt.wantHost != "" && !strings.Contains(ref, tt.wantHost) {
-				t.Errorf("ParseOCIRef() host not found. Got: %s, Expected to contain: %s", ref, tt.wantHost)
-			}
-		})
-	}
-}
-
 // TestMatchLabelValue tests the matchLabelValue function with different value types
 func TestMatchLabelValue(t *testing.T) {
 	tests := []struct {
