@@ -1,7 +1,51 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "github>opendefensecloud/renovate-config",
-    "github>opendefensecloud/renovate-config:go"
+  "packageRules": [
+    {
+      "description": "Label and scope everything that belongs to ocm-kit",
+      "matchFileNames": ["ocm-kit/**", ".github/workflows/ocm-kit*.yaml"],
+      "labels": ["dependencies", "ocm-kit"],
+      "semanticCommitScope": "ocm-kit"
+    },
+    {
+      "description": "Group ocm-kit Go module updates",
+      "matchFileNames": ["ocm-kit/**"],
+      "matchManagers": ["gomod"],
+      "groupName": "ocm-kit go modules"
+    },
+    {
+      "description": "Group the ocm-kit developer tooling pinned in tools.lock",
+      "matchFileNames": ["ocm-kit/tools.lock"],
+      "groupName": "ocm-kit tooling"
+    },
+    {
+      "description": "Group the Go toolchain version (go directive and flake)",
+      "matchDatasources": ["golang-version"],
+      "matchFileNames": ["ocm-kit/**"],
+      "groupName": "ocm-kit go toolchain"
+    },
+    {
+      "description": "Group the ocm-kit GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "matchFileNames": [".github/workflows/ocm-kit*.yaml"],
+      "groupName": "ocm-kit github actions"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Tool versions pinned in tools.lock",
+      "managerFilePatterns": ["/^ocm-kit/tools\\.lock$/"],
+      "matchStrings": ["\\S+\\s+(?<depName>[^@\\s]+)@(?<currentValue>v\\S+)"],
+      "datasourceTemplate": "go"
+    },
+    {
+      "customType": "regex",
+      "description": "Go toolchain version pinned in flake.nix",
+      "managerFilePatterns": ["/^ocm-kit/flake\\.nix$/"],
+      "matchStrings": ["goVersion = \"(?<currentValue>[0-9.]+)\""],
+      "depNameTemplate": "go",
+      "datasourceTemplate": "golang-version"
+    }
   ]
 }

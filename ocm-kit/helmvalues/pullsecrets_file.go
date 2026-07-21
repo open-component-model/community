@@ -9,6 +9,9 @@ import (
 
 // pullSecretsFile holds mappings from registries to pull secrets in the cluster
 type pullSecretsFile struct {
+	// Schema is the optional "$schema" hint for editor validation against the
+	// shipped pullsecrets-schema.json. Accepted and ignored.
+	Schema      string              `json:"$schema,omitempty"`
 	PullSecrets []pullSecretMapping `json:"pullSecrets"`
 }
 

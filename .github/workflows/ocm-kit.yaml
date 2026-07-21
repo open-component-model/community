@@ -1,0 +1,40 @@
+name: ocm-kit
+on:
+  pull_request:
+    paths:
+      - 'ocm-kit/**'
+      - '.github/workflows/ocm-kit.yaml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'ocm-kit/**'
+      - '.github/workflows/ocm-kit.yaml'
+permissions:
+  contents: read
+jobs:
+  build-test:
+    name: Build, test & lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ocm-kit
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Source the Go and golangci-lint versions from the dev flake and tools.lock
+      # so CI uses the same toolchain as local development.
+      - id: versions
+        run: |
+          echo "go=$(grep -oE 'goVersion = "[^"]+"' flake.nix | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')" >> "$GITHUB_OUTPUT"
+          echo "golangci=$(grep golangci-lint tools.lock | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+')" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ steps.versions.outputs.go }}
+          cache-dependency-path: ocm-kit/go.sum
+      - name: Build
+        run: go build ./...
+      - name: Test
+        run: go test ./...
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          working-directory: ocm-kit
+          version: ${{ steps.versions.outputs.golangci }}

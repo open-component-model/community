@@ -3,15 +3,18 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
-	"ocm.software/ocm/api/ocm"
-	"ocm.software/ocm/api/ocm/extensions/repositories/ocireg"
-	"ocm.software/ocm/api/ocm/ocmutils"
 
-	"go.opendefense.cloud/ocm-kit/compver"
-	"go.opendefense.cloud/ocm-kit/helmvalues"
+	"github.com/open-component-model/community/ocm-kit/compver"
+	"github.com/open-component-model/community/ocm-kit/helmvalues"
 )
+
+// version is the ocm-kit release version, injected at build time via -ldflags
+// "-X main.version=...". It defaults to "dev" for local builds.
+var version = "dev"
 
 func main() {
 	var (
@@ -21,8 +24,9 @@ func main() {
 	)
 
 	rootCmd := &cobra.Command{
-		Use:   "ocm-kit <component-version-ref>",
-		Short: "OCM Kit - Render Helm values templates from OCM components",
+		Use:     "ocm-kit <component-version-ref>",
+		Version: version,
+		Short:   "OCM Kit - Render Helm values templates from OCM components",
 		Long: `OCM Kit renders Helm values templates embedded in OCM (Open Component Model) components.
 
 It takes a component version reference and renders the first Helm values template for a specified chart.`,
@@ -30,27 +34,32 @@ It takes a component version reference and renders the first Helm values templat
 		RunE: func(cmd *cobra.Command, args []string) error {
 			componentVersionRef := args[0]
 
+			ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
+			defer stop()
+
 			cvr, err := compver.SplitRef(componentVersionRef)
 			if err != nil {
 				return fmt.Errorf("failed to split component version reference: %w", err)
 			}
 
-			octx, err := ocmutils.Configure(ocm.DefaultContext(), "")
+			client, err := helmvalues.NewAuthClient(ctx, "")
 			if err != nil {
-				return fmt.Errorf("failed to configure OCM context: %w", err)
+				return fmt.Errorf("failed to create auth client: %w", err)
 			}
 
-			repo, err := octx.RepositoryForSpec(ocireg.NewRepositorySpec(cvr.BaseURL()))
+			baseURL := cvr.Host + "/" + cvr.Namespace
+			repoURL := cvr.Protocol + "://" + baseURL
+
+			repo, err := helmvalues.OpenRepository(repoURL, helmvalues.WithAuthClient(client))
 			if err != nil {
-				return fmt.Errorf("failed to construct repository: %w", err)
+				return fmt.Errorf("failed to open repository: %w", err)
 			}
 			defer func() { _ = repo.Close() }()
 
-			compVer, err := repo.LookupComponentVersion(cvr.ComponentName, cvr.Version)
+			desc, err := repo.GetComponentVersion(ctx, cvr.ComponentName, cvr.Version)
 			if err != nil {
-				return fmt.Errorf("failed to lookup component version: %w", err)
+				return fmt.Errorf("failed to get component version: %w", err)
 			}
-			defer func() { _ = compVer.Close() }()
 
 			var template *helmvalues.HelmValuesTemplate
 
@@ -66,18 +75,18 @@ It takes a component version reference and renders the first Helm values templat
 					TemplateContent: string(content),
 				}
 			} else if chartResName != "" {
-				template, err = helmvalues.GetHelmValuesTemplate(compVer, chartResName)
+				template, err = helmvalues.GetHelmValuesTemplate(ctx, repo, desc, chartResName)
 				if err != nil {
 					return fmt.Errorf("failed to get helm values template: %w", err)
 				}
 			} else {
-				template, err = helmvalues.GetFirstHelmValuesTemplate(compVer)
+				template, err = helmvalues.GetFirstHelmValuesTemplate(ctx, repo, desc)
 				if err != nil {
 					return fmt.Errorf("failed to get helm values template: %w", err)
 				}
 			}
 
-			input, err := helmvalues.GetRenderingInput(compVer)
+			input, err := helmvalues.GetRenderingInput(desc, baseURL)
 			if err != nil {
 				return fmt.Errorf("failed to build rendering input: %w", err)
 			}

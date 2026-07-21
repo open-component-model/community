@@ -2,27 +2,16 @@ package helmvalues
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"slices"
 	"strings"
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
-	"ocm.software/ocm/api/oci"
-	"ocm.software/ocm/api/ocm"
-	"ocm.software/ocm/api/ocm/compdesc"
-	v1 "ocm.software/ocm/api/ocm/compdesc/meta/v1"
-	"ocm.software/ocm/api/ocm/extensions/accessmethods/ociartifact"
-	"ocm.software/ocm/api/ocm/extensions/accessmethods/relativeociref"
+	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
 	"sigs.k8s.io/yaml"
-)
-
-const (
-	// HelmValuesTemplateLabelName is the label used to identify Helm values templates in OCM resources
-	HelmValuesTemplateLabelName = "opendefense.cloud/helm/values-for"
 )
 
 // ErrNotFound is returned when a requested Helm values template is not found
@@ -34,15 +23,6 @@ type HelmValuesTemplate struct {
 	ResourceName    string
 	ResourceVersion string
 	TemplateContent string
-}
-
-// ImageReference is a representation of an OCI image reference with all its parts.
-// All fields are expected to be non-empty after parsing a reference (see ParseOCIRef) and Host might include a port.
-type ImageReference struct {
-	Host       string
-	Repository string
-	Tag        string
-	Digest     string
 }
 
 // PullSecrets is a collection of registry-to-secret mappings for pull secrets.
@@ -84,7 +64,7 @@ func (p PullSecrets) Resolve(ref string) string {
 // It provides access to component resources and the component descriptor for template processing.
 type RenderingInput struct {
 	OCIResources map[string]ImageReference
-	Component    *compdesc.ComponentSpec
+	Component    *descriptor.Component
 	PullSecrets  PullSecrets
 }
 
@@ -103,199 +83,107 @@ func WithYAMLValidation() RenderOption {
 	}
 }
 
-// FindHelmValuesTemplate searches for a Helm values template in an OCM component version
-// for a specific chart resource. It looks for resources labeled with the HelmValuesTemplateLabelName
-// where the label value matches the provided chartResourceName.
-//
-// Parameters:
-//   - compVer: An OCM ComponentVersionAccess object
-//   - chartResourceName: The name of the Helm chart resource to find the template for
-//
-// Returns the ResourceAccess for the template if found, or ErrNotFound if no matching template exists.
-func FindHelmValuesTemplate(compVer ocm.ComponentVersionAccess, chartResourceName string) (ocm.ResourceAccess, error) {
-	for _, res := range compVer.GetResources() {
-		labels := res.Meta().GetLabels()
-		if slices.ContainsFunc(labels, func(x v1.Label) bool {
-			return x.Name == HelmValuesTemplateLabelName && matchLabelValue(x.Value, chartResourceName)
-		}) {
-			return res, nil
+// FindHelmValuesTemplate returns the resource in desc carrying a helm-values
+// label whose value matches chart, or ErrNotFound if no such resource exists.
+func FindHelmValuesTemplate(desc *descriptor.Descriptor, chart string) (*descriptor.Resource, error) {
+	for i := range desc.Component.Resources {
+		if matchesHelmValuesLabel(desc.Component.Resources[i], chart) {
+			res := desc.Component.Resources[i]
+			return &res, nil
 		}
 	}
 
 	return nil, ErrNotFound
 }
 
-// FindFirstHelmValuesTemplate searches for the first Helm values template in an OCM component version.
-// It looks for any resource labeled with the HelmValuesTemplateLabelName, regardless of the label value.
-//
-// Parameters:
-//   - compVer: An OCM ComponentVersionAccess object
-//
-// Returns the ResourceAccess for the first template found, or ErrNotFound if no template exists.
-func FindFirstHelmValuesTemplate(compVer ocm.ComponentVersionAccess) (ocm.ResourceAccess, error) {
-	for _, res := range compVer.GetResources() {
-		labels := res.Meta().GetLabels()
-		if slices.ContainsFunc(labels, func(x v1.Label) bool {
-			return x.Name == HelmValuesTemplateLabelName
-		}) {
-			return res, nil
+// FindFirstHelmValuesTemplate returns the first resource in desc carrying any
+// helm-values label, regardless of value, or ErrNotFound if none exists.
+func FindFirstHelmValuesTemplate(desc *descriptor.Descriptor) (*descriptor.Resource, error) {
+	for i := range desc.Component.Resources {
+		if hasAnyHelmValuesLabel(desc.Component.Resources[i]) {
+			res := desc.Component.Resources[i]
+			return &res, nil
 		}
 	}
 
 	return nil, ErrNotFound
 }
 
-// FetchHelmValuesTemplate extracts the content from a Helm values template resource.
-//
-// Parameters:
-//   - res: The OCM ResourceAccess to download
-//
-// Returns a HelmValuesTemplate with the downloaded content, or an error if download/read fails.
-func FetchHelmValuesTemplate(res ocm.ResourceAccess) (*HelmValuesTemplate, error) {
-	blobaccess, err := res.BlobAccess()
+// FetchHelmValuesTemplate downloads the content of the template resource res
+// from repo and returns it as a HelmValuesTemplate.
+func FetchHelmValuesTemplate(ctx context.Context, repo Repository, desc *descriptor.Descriptor, res *descriptor.Resource) (*HelmValuesTemplate, error) {
+	data, err := repo.ResourceBytes(ctx, desc.Component.Name, desc.Component.Version, res.Name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get blob access for resource: %w", err)
+		return nil, fmt.Errorf("failed to fetch helm values template resource %q: %w", res.Name, err)
 	}
-	defer func() {
-		_ = blobaccess.Close()
-	}()
-	r, err := blobaccess.Reader()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get reader for resource access: %w", err)
-	}
-	defer func() {
-		_ = r.Close()
-	}()
-	b, err := io.ReadAll(r)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read resource content: %w", err)
-	}
-	templateContent := string(b)
 
 	return &HelmValuesTemplate{
-		ResourceName:    res.Meta().Name,
-		ResourceVersion: res.Meta().Version,
-		TemplateContent: templateContent,
+		ResourceName:    res.Name,
+		ResourceVersion: res.Version,
+		TemplateContent: string(data),
 	}, nil
 }
 
-// GetHelmValuesTemplate searches for and retrieves a Helm values template from an OCM component.
-// This is a convenience function that combines FindHelmValuesTemplate and FetchHelmValuesTemplate.
-//
-// Parameters:
-//   - compVer: An OCM ComponentVersionAccess object
-//   - chartResourceName: The name of the Helm chart resource to find the template for
-//
-// Returns a HelmValuesTemplate with the downloaded content, or an error if not found or download fails.
-func GetHelmValuesTemplate(compVer ocm.ComponentVersionAccess, chartResourceName string) (*HelmValuesTemplate, error) {
-	res, err := FindHelmValuesTemplate(compVer, chartResourceName)
+// GetHelmValuesTemplate finds the helm-values template matching chart and
+// downloads its content via repo. It combines FindHelmValuesTemplate and
+// FetchHelmValuesTemplate.
+func GetHelmValuesTemplate(ctx context.Context, repo Repository, desc *descriptor.Descriptor, chart string) (*HelmValuesTemplate, error) {
+	res, err := FindHelmValuesTemplate(desc, chart)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find helm values template: %w", err)
 	}
 
-	return FetchHelmValuesTemplate(res)
+	return FetchHelmValuesTemplate(ctx, repo, desc, res)
 }
 
-// GetFirstHelmValuesTemplate retrieves the first Helm values template from an OCM component.
-// This is a convenience function that combines FindFirstHelmValuesTemplate and FetchHelmValuesTemplate.
-//
-// Parameters:
-//   - compVer: An OCM ComponentVersionAccess object
-//
-// Returns a HelmValuesTemplate with the downloaded content, or an error if not found or download fails.
-func GetFirstHelmValuesTemplate(compVer ocm.ComponentVersionAccess) (*HelmValuesTemplate, error) {
-	res, err := FindFirstHelmValuesTemplate(compVer)
+// GetFirstHelmValuesTemplate finds the first helm-values template and downloads
+// its content via repo. It combines FindFirstHelmValuesTemplate and
+// FetchHelmValuesTemplate.
+func GetFirstHelmValuesTemplate(ctx context.Context, repo Repository, desc *descriptor.Descriptor) (*HelmValuesTemplate, error) {
+	res, err := FindFirstHelmValuesTemplate(desc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find first helm values template: %w", err)
 	}
 
-	return FetchHelmValuesTemplate(res)
+	return FetchHelmValuesTemplate(ctx, repo, desc, res)
 }
 
-// GetRenderingInput extracts and prepares data needed to render a Helm values template.
-// It iterates through all resources in the component and processes them based on their access method.
-// OCI artifacts are automatically parsed into ImageRef structures for easy access in templates.
-// Other access methods are stored as-is or converted appropriately.
+// GetRenderingInput builds the rendering input from a descriptor. It iterates
+// the component's resources and, for each resource backed by an OCI image
+// access, parses its absolute reference into OCIResources keyed by resource
+// name. Non-OCI resources are skipped. The descriptor's component is attached
+// for template access.
 //
-// Parameters:
-//   - compVer: An OCM ComponentVersionAccess object
-//
-// Returns a RenderingInput containing all the data needed to render templates, or an error if extraction fails.
-func GetRenderingInput(compVer ocm.ComponentVersionAccess) (*RenderingInput, error) {
-	descriptor := compVer.GetDescriptor()
-	if descriptor == nil {
-		return nil, fmt.Errorf("component descriptor is nil")
-	}
-	componentSpec := &descriptor.ComponentSpec
-
-	// Extract oci resource information
+// repoBaseURL is the repository context the CLI already holds — the base URL it
+// opened the repository with, "<host>/<namespace>" — used to reconstruct FULL
+// absolute references for component-local (relative) resources whose resolved
+// reference is a host-less repository path. See ResourceOCIReference.
+func GetRenderingInput(desc *descriptor.Descriptor, repoBaseURL string) (*RenderingInput, error) {
 	ociResourceMap := make(map[string]ImageReference)
 
-	for _, res := range compVer.GetResources() {
-		imageRef, err := resolveOCIReference(res, compVer)
-		if err != nil {
-			return nil, fmt.Errorf("failed to resolve OCI reference for resource %s: %w", res.Meta().Name, err)
-		}
+	for i := range desc.Component.Resources {
+		res := desc.Component.Resources[i]
 
-		if imageRef == "" {
+		ref, ok, err := ResourceOCIReference(res, repoBaseURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve OCI reference for resource %q: %w", res.Name, err)
+		}
+		if !ok {
 			continue
 		}
 
-		// Parse OCI reference and store it
-		parsedRef, err := ParseOCIRef(imageRef)
+		parsedRef, err := ParseOCIRef(ref)
 		if err != nil {
-			return nil, fmt.Errorf("resources access contained invalid image reference: %w", err)
+			return nil, fmt.Errorf("resource %q access contained invalid image reference: %w", res.Name, err)
 		}
 
-		digest := ""
-		if parsedRef.Digest != nil {
-			digest = string(*parsedRef.Digest)
-		}
-
-		ociResourceMap[res.Meta().Name] = ImageReference{
-			Host:       parsedRef.Host,
-			Repository: parsedRef.Repository,
-			Tag:        derefOrEmpty(parsedRef.Tag),
-			Digest:     digest,
-		}
+		ociResourceMap[res.Name] = parsedRef
 	}
 
 	return &RenderingInput{
 		OCIResources: ociResourceMap,
-		Component:    componentSpec,
+		Component:    &desc.Component,
 	}, nil
-}
-
-// resolveOCIReference extracts the OCI image reference from a resource access.
-// It handles both absolute references (ociArtifact) via GlobalAccess and relative
-// references (relativeOciReference) by resolving them against the component version's
-// repository.
-func resolveOCIReference(res ocm.ResourceAccess, compVer ocm.ComponentVersionAccess) (string, error) {
-	// Try global access first — works for absolute ociArtifact references.
-	ga := res.GlobalAccess()
-	if ga != nil {
-		if spec, ok := ga.(*ociartifact.AccessSpec); ok {
-			return spec.ImageReference, nil
-		}
-	}
-
-	// Fall back to checking the local access spec for relative OCI references.
-	acc, err := res.Access()
-	if err != nil {
-		return "", fmt.Errorf("failed to get access spec: %w", err)
-	}
-
-	if relSpec, ok := acc.(*relativeociref.AccessSpec); ok {
-		ref, err := relSpec.GetOCIReference(compVer)
-		if err != nil {
-			return "", fmt.Errorf("failed to resolve relative OCI reference: %w", err)
-		}
-
-		return ref, nil
-	}
-
-	// Not an OCI-based resource — skip it.
-	return "", nil
 }
 
 // Render processes a Helm values template with the provided rendering input.
@@ -351,35 +239,6 @@ func Render(tmpl *HelmValuesTemplate, input *RenderingInput, opts ...RenderOptio
 	return result, nil
 }
 
-// ParseOCIRef parses an OCI image reference and extracts its components.
-// Returns an oci.RefSpec containing the parsed reference details.
-//
-// Parameters:
-//   - imageRef: The OCI image reference string (e.g., "registry.example.com/repo/image:tag")
-//
-// Returns an oci.RefSpec with the parsed reference, or an error if parsing fails.
-func ParseOCIRef(imageRef string) (oci.RefSpec, error) {
-	return oci.ParseRef(imageRef)
-}
-
-// matchLabelValue checks if a label value matches the target string.
-// Label values can be either json.RawMessage or string, so this function handles both types.
-//
-// Parameters:
-//   - value: The label value to check (can be json.RawMessage or string)
-//   - target: The target string to match against
-//
-// Returns true if the value matches the target, false otherwise.
-func matchLabelValue(value any, target string) bool {
-	switch v := value.(type) {
-	case json.RawMessage:
-		return string(v) == fmt.Sprintf("\"%s\"", target)
-	case string:
-		return v == target
-	}
-	return false
-}
-
 // getFuncMap creates and returns the template function map for rendering templates.
 // It includes all sprig template functions (except potentially unsafe ones like env and expandenv)
 // plus custom functions for JSON conversion and OCI reference parsing.
@@ -407,25 +266,4 @@ func getFuncMap(pullSecrets PullSecrets) template.FuncMap {
 	}
 
 	return f
-}
-
-func (r ImageReference) String() string {
-	s := ""
-	if r.Host != "" {
-		s += r.Host + "/"
-	}
-	if r.Repository != "" {
-		s += r.Repository
-	}
-	if r.Tag != "" {
-		s += ":" + r.Tag
-	}
-	return s
-}
-
-func derefOrEmpty(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
 }

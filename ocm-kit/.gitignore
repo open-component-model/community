@@ -29,11 +29,6 @@ dev/
 
 apiserver.local.config/
 
-# dev-kit common.mk cache/sentinel files
-common.mk
-.common.mk-version
-.common.mk-checked
-.common.mk-download
 default.etcd/
 .DS_Store
 
@@ -60,4 +55,5 @@ ctf-rel
 # binary in case cmd/ocm-kit was built
 /ocm-kit
 
-common.mk
+# release build output
+/dist/

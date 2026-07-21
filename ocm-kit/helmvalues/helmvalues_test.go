@@ -1,11 +1,16 @@
 package helmvalues
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 
-	"ocm.software/ocm/api/oci"
+	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
+	v2 "ocm.software/open-component-model/bindings/go/descriptor/v2"
+	ociaccessv1 "ocm.software/open-component-model/bindings/go/oci/spec/access/v1"
+	"ocm.software/open-component-model/bindings/go/runtime"
 )
 
 // TestRender tests the Render function with various template scenarios
@@ -131,104 +136,6 @@ func TestRender(t *testing.T) {
 
 			if tt.wantMatch != "" && !strings.Contains(got, tt.wantMatch) {
 				t.Errorf("Render() output doesn't contain expected text.\nGot: %s\nExpected to contain: %s", got, tt.wantMatch)
-			}
-		})
-	}
-}
-
-// TestParseOCIRef tests the ParseOCIRef function with various OCI reference formats
-func TestParseOCIRef(t *testing.T) {
-	tests := []struct {
-		name     string
-		imageRef string
-		wantHost string
-		wantPath string
-		wantTag  string
-		wantErr  bool
-	}{
-		{
-			name:     "simple reference with tag",
-			imageRef: "http://localhost:5000/my-components/opendefensecloud/charts/arc:0.1.4@sha256:43d0a3045598b20ca8f39ac1b709e2a574d3a710d27aab5edf5b98ef40fe4d60",
-			wantHost: "localhost:5000",
-			wantPath: "my-components/opendefensecloud/charts/arc",
-			wantTag:  "0.1.4",
-			wantErr:  false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseOCIRef(tt.imageRef)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseOCIRef() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if err != nil {
-				return
-			}
-
-			// Verify the parsed reference has expected components
-			ref := got.String()
-			if ref == "" {
-				t.Errorf("ParseOCIRef() returned empty string")
-			}
-
-			// For valid references, check that basic parsing succeeded
-			if tt.wantTag != "" && !strings.Contains(ref, tt.wantTag) {
-				t.Errorf("ParseOCIRef() tag not found. Got: %s, Expected to contain: %s", ref, tt.wantTag)
-			}
-			if tt.wantHost != "" && !strings.Contains(ref, tt.wantHost) {
-				t.Errorf("ParseOCIRef() host not found. Got: %s, Expected to contain: %s", ref, tt.wantHost)
-			}
-		})
-	}
-}
-
-// TestMatchLabelValue tests the matchLabelValue function with different value types
-func TestMatchLabelValue(t *testing.T) {
-	tests := []struct {
-		name   string
-		value  any
-		target string
-		want   bool
-	}{
-		{
-			name:   "string value match",
-			value:  "helm-chart",
-			target: "helm-chart",
-			want:   true,
-		},
-		{
-			name:   "string value no match",
-			value:  "other-chart",
-			target: "helm-chart",
-			want:   false,
-		},
-		{
-			name:   "json.RawMessage match",
-			value:  json.RawMessage(`"helm-chart"`),
-			target: "helm-chart",
-			want:   true,
-		},
-		{
-			name:   "json.RawMessage no match",
-			value:  json.RawMessage(`"different-chart"`),
-			target: "helm-chart",
-			want:   false,
-		},
-		{
-			name:   "json.RawMessage without quotes",
-			value:  json.RawMessage(`helm-chart`),
-			target: "helm-chart",
-			want:   false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := matchLabelValue(tt.value, tt.target)
-			if got != tt.want {
-				t.Errorf("matchLabelValue(%v, %q) = %v, want %v", tt.value, tt.target, got, tt.want)
 			}
 		})
 	}
@@ -424,22 +331,151 @@ func TestRenderPullSecretFor(t *testing.T) {
 }
 
 func mkImageRef(ref string) ImageReference {
-	parsed, err := oci.ParseRef(ref)
+	parsed, err := ParseOCIRef(ref)
 	if err != nil {
 		panic(err)
 	}
-	if parsed.Host == "docker.io" {
-		// special case from oci.ParseRef
-		return ImageReference{
-			Host:       "",
-			Repository: strings.Replace(parsed.Repository, "library/", "", 1),
-			Tag:        derefOrEmpty(parsed.Tag),
-		}
+	return parsed
+}
+
+// mkDescriptor builds an in-memory descriptor with the given component
+// name/version and resources for exercising the find/fetch/get functions.
+func mkDescriptor(name, version string, resources ...descriptor.Resource) *descriptor.Descriptor {
+	d := &descriptor.Descriptor{}
+	d.Component.Name = name
+	d.Component.Version = version
+	d.Component.Resources = resources
+	return d
+}
+
+// TestGetFirstHelmValuesTemplate verifies FindFirst+Fetch returns the labeled
+// template's content downloaded via the repository.
+func TestGetFirstHelmValuesTemplate(t *testing.T) {
+	res := resWithLabel("values",
+		descriptor.Label{Name: LabelHelmValuesFor, Value: json.RawMessage(`"mychart"`)},
+	)
+	res.Version = "2.0.0"
+	desc := mkDescriptor("acme.org/app", "1.0.0", res)
+
+	repo := &FakeRepository{
+		Descriptor: desc,
+		Blobs:      map[string][]byte{"values": []byte("replicas: 3")},
 	}
 
-	return ImageReference{
-		Host:       parsed.Host,
-		Repository: parsed.Repository,
-		Tag:        derefOrEmpty(parsed.Tag),
+	tmpl, err := GetFirstHelmValuesTemplate(context.Background(), repo, desc)
+	if err != nil {
+		t.Fatalf("GetFirstHelmValuesTemplate() error = %v", err)
+	}
+	if tmpl.ResourceName != "values" {
+		t.Errorf("ResourceName = %q, want %q", tmpl.ResourceName, "values")
+	}
+	if tmpl.ResourceVersion != "2.0.0" {
+		t.Errorf("ResourceVersion = %q, want %q", tmpl.ResourceVersion, "2.0.0")
+	}
+	if tmpl.TemplateContent != "replicas: 3" {
+		t.Errorf("TemplateContent = %q, want %q", tmpl.TemplateContent, "replicas: 3")
+	}
+}
+
+// TestGetFirstHelmValuesTemplateNotFound verifies ErrNotFound when no resource
+// carries a helm-values label.
+func TestGetFirstHelmValuesTemplateNotFound(t *testing.T) {
+	desc := mkDescriptor("acme.org/app", "1.0.0", resWithLabel("plain"))
+	repo := &FakeRepository{Descriptor: desc, Blobs: map[string][]byte{}}
+
+	_, err := GetFirstHelmValuesTemplate(context.Background(), repo, desc)
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("error = %v, want ErrNotFound", err)
+	}
+}
+
+// TestGetHelmValuesTemplate verifies matching by chart name and ErrNotFound for
+// a non-matching chart.
+func TestGetHelmValuesTemplate(t *testing.T) {
+	values := resWithLabel("values",
+		descriptor.Label{Name: LabelHelmValuesFor, Value: json.RawMessage(`"mychart"`)},
+	)
+	other := resWithLabel("other",
+		descriptor.Label{Name: LabelHelmValuesFor, Value: json.RawMessage(`"otherchart"`)},
+	)
+	desc := mkDescriptor("acme.org/app", "1.0.0", other, values)
+
+	repo := &FakeRepository{
+		Descriptor: desc,
+		Blobs: map[string][]byte{
+			"values": []byte("for: mychart"),
+			"other":  []byte("for: otherchart"),
+		},
+	}
+
+	tmpl, err := GetHelmValuesTemplate(context.Background(), repo, desc, "mychart")
+	if err != nil {
+		t.Fatalf("GetHelmValuesTemplate() error = %v", err)
+	}
+	if tmpl.ResourceName != "values" {
+		t.Errorf("ResourceName = %q, want %q", tmpl.ResourceName, "values")
+	}
+	if tmpl.TemplateContent != "for: mychart" {
+		t.Errorf("TemplateContent = %q, want %q", tmpl.TemplateContent, "for: mychart")
+	}
+
+	_, err = GetHelmValuesTemplate(context.Background(), repo, desc, "no-such-chart")
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("error = %v, want ErrNotFound", err)
+	}
+}
+
+// TestGetRenderingInput verifies OCI resources are parsed into OCIResources and
+// the component is attached.
+func TestGetRenderingInput(t *testing.T) {
+	ociRes := descriptor.Resource{
+		ElementMeta: descriptor.ElementMeta{
+			ObjectMeta: descriptor.ObjectMeta{Name: "app"},
+		},
+		Access: &ociaccessv1.OCIImage{ImageReference: "ghcr.io/acme/app:v1"},
+	}
+	// A relative (LocalBlob) resource with only a host-less ReferenceName must be
+	// reconstructed into a host-qualified reference using the repo base URL.
+	relRes := descriptor.Resource{
+		ElementMeta: descriptor.ElementMeta{
+			ObjectMeta: descriptor.ObjectMeta{Name: "rel"},
+		},
+		Access: &v2.LocalBlob{
+			Type:          runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
+			ReferenceName: "opendefensecloud/arc-apiserver:v0.2.0",
+		},
+	}
+	// A non-OCI resource must be skipped.
+	plainRes := resWithLabel("values")
+
+	desc := mkDescriptor("acme.org/app", "1.0.0", ociRes, relRes, plainRes)
+
+	const repoBaseURL = "127.0.0.1:5000/my-components"
+	input, err := GetRenderingInput(desc, repoBaseURL)
+	if err != nil {
+		t.Fatalf("GetRenderingInput() error = %v", err)
+	}
+	if input.Component != &desc.Component {
+		t.Errorf("Component = %p, want %p", input.Component, &desc.Component)
+	}
+	if len(input.OCIResources) != 2 {
+		t.Fatalf("len(OCIResources) = %d, want 2", len(input.OCIResources))
+	}
+	got, ok := input.OCIResources["app"]
+	if !ok {
+		t.Fatalf("OCIResources missing key %q", "app")
+	}
+	want := ImageReference{Host: "ghcr.io", Repository: "acme/app", Tag: "v1"}
+	if got != want {
+		t.Errorf("OCIResources[app] = %#v, want %#v", got, want)
+	}
+	// The relative resource is now host-qualified via the base URL.
+	gotRel, ok := input.OCIResources["rel"]
+	if !ok {
+		t.Fatalf("OCIResources missing key %q", "rel")
+	}
+	wantRel := ImageReference{Host: "127.0.0.1:5000", Repository: "my-components/opendefensecloud/arc-apiserver", Tag: "v0.2.0"}
+	if gotRel != wantRel {
+		t.Errorf("OCIResources[rel] = %#v, want %#v", gotRel, wantRel)
 	}
 }

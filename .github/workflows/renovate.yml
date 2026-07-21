@@ -1,0 +1,109 @@
+name: Renovate
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      repoCache:
+        description: 'Reset or disable the cache?'
+        type: choice
+        default: enabled
+        options: [ enabled, disabled, reset ]
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/renovate.json
+      - ocm-kit/renovate.json
+      - .github/workflows/renovate.yml
+
+permissions:
+  contents: read
+
+env:
+  cache_archive: renovate_cache.tar.gz
+  cache_dir: /tmp/renovate/cache/renovate/repository
+  cache_key: renovate-cache
+  RENOVATE_CONFIG_FILE: .github/renovate.json
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: ${{ env.RENOVATE_CONFIG_FILE }}
+          persist-credentials: false
+
+      - name: Restore renovate cache artifact
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.repoCache != 'disabled' }}
+        uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
+        continue-on-error: true
+        with:
+          name: ${{ env.cache_key }}
+          path: cache-download
+
+      - name: Extract renovate cache
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.repoCache != 'disabled' }}
+        run: |
+          set -euxo pipefail
+          if [ ! -d cache-download ]; then
+            echo "No cache found."
+            exit 0
+          fi
+          mkdir -p "$cache_dir"
+          tar -xzf "cache-download/${cache_archive}" -C "$cache_dir"
+          sudo chown -R 12021:0 /tmp/renovate/
+          ls -R "$cache_dir" || true
+
+      - name: Generate token
+        if: ${{ github.event_name != 'pull_request' && github.repository_owner == 'open-component-model' }}
+        id: generate_token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.OCMBOT_APP_ID }}
+          private-key: ${{ secrets.OCMBOT_PRIV_KEY }}
+          repositories: ${{ github.event.repository.name }}
+          permission-checks: write
+          permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
+          permission-statuses: write
+          permission-workflows: write
+
+      - name: Ensure dry-run on pull requests
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "RENOVATE_DRY_RUN=extract" >> "$GITHUB_ENV"
+
+      - name: Run
+        uses: renovatebot/github-action@3064367f740a1a91cca218698a63902689cce200 # v46.1.20
+        with:
+          env-regex: |
+            ^(?:RENOVATE_\w+|LOG_LEVEL|GITHUB_COM_TOKEN|NODE_OPTIONS|(?:HTTPS?|NO)_PROXY|(?:https?|no)_proxy)$
+          token: ${{ steps.generate_token.outputs.token || secrets.GITHUB_TOKEN }}
+        env:
+          RENOVATE_ONBOARDING: 'false'
+          RENOVATE_USERNAME: 'ocmbot[bot]'
+          RENOVATE_PLATFORM: 'github'
+          RENOVATE_PLATFORM_COMMIT: 'true'
+          RENOVATE_REPOSITORIES: "${{ github.repository }}"
+          RENOVATE_REPOSITORY_CACHE: ${{ github.event_name == 'workflow_dispatch' && inputs.repoCache || 'enabled' }}
+
+      - name: Compress renovate cache
+        if: ${{ env.RENOVATE_DRY_RUN == '' && (github.event_name != 'workflow_dispatch' || inputs.repoCache != 'disabled') }}
+        run: |
+          set -euxo pipefail
+          ls "$cache_dir" || true
+          tar -czvf "$cache_archive" -C "$cache_dir" .
+
+      - name: Upload renovate cache artifact
+        if: ${{ env.RENOVATE_DRY_RUN == '' && (github.event_name != 'workflow_dispatch' || inputs.repoCache != 'disabled') }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ env.cache_key }}
+          path: ${{ env.cache_archive }}
+          retention-days: 1

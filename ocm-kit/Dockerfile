@@ -23,9 +23,11 @@ ARG TARGETARCH
 RUN mkdir bin
 
 FROM builder AS ocm-kit-builder
+# VERSION is embedded into the binary (exposed via `ocm-kit --version`).
+ARG VERSION=dev
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
-    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH GO111MODULE=on go build -ldflags="-s -w" -a -o bin/ocm-kit ./cmd/ocm-kit
+    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH GO111MODULE=on go build -ldflags="-s -w -X main.version=${VERSION}" -a -o bin/ocm-kit ./cmd/ocm-kit
 
 # Use distroless as minimal base image to package the binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
