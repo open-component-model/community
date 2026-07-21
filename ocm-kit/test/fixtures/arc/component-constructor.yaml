@@ -1,0 +1,60 @@
+components:
+  - name: opendefense.cloud/arc
+    # Version is injected by the e2e harness via environment-variable
+    # substitution (`add component-version` has no --version flag). See
+    # test/e2e.sh, which exports COMPONENT_VERSION.
+    version: ${COMPONENT_VERSION}
+    provider:
+      name: opendefense.cloud
+    resources:
+      # Artifact Conduit (ARC) Helm Chart (official)
+      - name: helm-chart
+        type: helmChart
+        version: v0.2.0
+        relation: external
+        access:
+          type: ociArtifact
+          imageReference: ghcr.io/opendefensecloud/charts/arc:0.1.4
+
+      # API Server Container Image
+      - name: arc-apiserver-image
+        type: ociImage
+        version: v0.2.0
+        relation: external
+        access:
+          type: ociArtifact
+          imageReference: ghcr.io/opendefensecloud/arc-apiserver:v0.2.0
+
+      # Controller Manager Container Image
+      - name: arc-controller-manager-image
+        type: ociImage
+        version: v0.2.0
+        relation: external
+        access:
+          type: ociArtifact
+          imageReference: ghcr.io/opendefensecloud/arc-controller-manager:v0.2.0
+
+      # etcd Container Image
+      - name: etcd-image
+        type: ociImage
+        version: v3.6.6
+        relation: external
+        access:
+          type: ociArtifact
+          imageReference: quay.io/coreos/etcd:v3.6.6
+
+      - name: helm-values-template
+        type: yaml
+        labels:
+        - name: "ext.ocm.software/helm.values-for"
+          value: helm-chart
+        relation: local
+        input:
+          type: file
+          path: values.yaml.tpl
+          # Explicit OCI-compliant media type. Without it the CLI auto-detects
+          # "text/plain; charset=utf-8" for the file, whose "; charset=..." suffix
+          # violates the OCI image-manifest mediaType pattern and is rejected by
+          # zot's strict manifest validation on push.
+          mediaType: application/x-yaml
+
