@@ -51,6 +51,37 @@ func TestParsePullSecretsFile(t *testing.T) {
 		}
 	})
 
+	t.Run("valid file with $schema hint is accepted", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "schema.json")
+		content := `{"$schema": "https://example.com/pullsecrets-schema.json", "pullSecrets": [{"registry": "docker.io", "secretName": "regcred"}]}`
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		got, err := ParsePullSecretsFile(path)
+		if err != nil {
+			t.Fatalf("ParsePullSecretsFile() unexpected error: %v", err)
+		}
+		if g, w := got.Get("docker.io"), "regcred"; g != w {
+			t.Errorf("PullSecrets.Get(\"docker.io\") = %q, want %q", g, w)
+		}
+	})
+
+	t.Run("truly unknown field still returns error", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "unknown.json")
+		content := `{"bogus": true, "pullSecrets": []}`
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		_, err := ParsePullSecretsFile(path)
+		if err == nil {
+			t.Fatal("ParsePullSecretsFile() expected error for unknown field, got nil")
+		}
+	})
+
 	t.Run("nonexistent file returns error", func(t *testing.T) {
 		_, err := ParsePullSecretsFile("/nonexistent/path/secrets.json")
 		if err == nil {
