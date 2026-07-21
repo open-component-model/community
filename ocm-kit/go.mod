@@ -1,4 +1,4 @@
-module go.opendefense.cloud/ocm-kit
+module github.com/open-component-model/community/ocm-kit
 
 go 1.26.4
 

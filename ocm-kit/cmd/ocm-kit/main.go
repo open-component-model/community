@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"go.opendefense.cloud/ocm-kit/compver"
-	"go.opendefense.cloud/ocm-kit/helmvalues"
+	"github.com/open-component-model/community/ocm-kit/compver"
+	"github.com/open-component-model/community/ocm-kit/helmvalues"
 )
 
 func main() {
