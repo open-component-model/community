@@ -301,13 +301,14 @@ Each resource is automatically parsed into an object with:
 - `.Tag` - The image tag
 - `.Digest` - The image digest
 
-For other access methods (OCI blobs, local blobs, S3, Git, etc.), the relevant fields are extracted into structured maps.
+Resources without an OCI-based access method are not included in this map.
 
-Access example:
+Access example (field and map names are case-sensitive, and rendering uses
+`missingkey=error`, so the casing below must be matched exactly):
 ```yaml
-{{- $image := index .OCIresources "my-image" }}
-repository: {{ $image.host }}/{{ $image.repository }}
-tag: {{ $image.tag }}
+{{- $image := index .OCIResources "my-image" }}
+repository: {{ $image.Host }}/{{ $image.Repository }}
+tag: {{ $image.Tag }}
 ```
 
 ### `.PullSecrets`
