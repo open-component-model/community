@@ -1,0 +1,33 @@
+name: ocm-kit
+on:
+  pull_request:
+    paths:
+      - 'ocm-kit/**'
+      - '.github/workflows/ocm-kit.yaml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'ocm-kit/**'
+      - '.github/workflows/ocm-kit.yaml'
+permissions:
+  contents: read
+jobs:
+  build-test:
+    name: Build, test & lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ocm-kit
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: ocm-kit/go.mod
+          cache-dependency-path: ocm-kit/go.sum
+      - name: Build
+        run: go build ./...
+      - name: Test
+        run: go test ./...
+      - uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6
+        with:
+          working-directory: ocm-kit
