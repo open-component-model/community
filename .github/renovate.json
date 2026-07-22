@@ -3,6 +3,7 @@
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
+    ":semanticCommits",
     "helpers:pinGitHubActionDigests",
     "local>open-component-model/community//ocm-kit/renovate.json"
   ]
