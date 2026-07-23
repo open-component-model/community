@@ -11,5 +11,5 @@ permissions:
   pull-requests: write
 jobs:
   stale:  # call reusable workflow from central '.github' repo
-    uses: open-component-model/.github/.github/workflows/stale.yml@e2feabd944a76de399805ecc5414ad22e449ee56 # main
+    uses: open-component-model/.github/.github/workflows/stale.yml@327ea44865483bb8cf192c76b7574141aacb2b2d # main
     secrets: inherit
