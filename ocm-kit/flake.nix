@@ -18,7 +18,7 @@
       let
         # Go toolchain version, as a plain "X.Y.Z" string so CI can read it
         # (grep `goVersion` in this file). The dev shell pins the matching line.
-        goVersion = "1.26.4";
+        goVersion = "1.26.5";
 
         pkgs = import nixpkgs {
           inherit system;
