@@ -1,0 +1,94 @@
+{
+    "items": [
+        {
+            "artefact": {
+                "component_name": "acme.org/sovereign/postgres",
+                "component_version": null,
+                "artefact": {
+                    "artefact_name": "image",
+                    "artefact_type": "ociImage",
+                    "artefact_version": null,
+                    "artefact_extra_id": {}
+                },
+                "artefact_kind": "resource",
+                "references": []
+            },
+            "meta": {
+                "datasource": "delivery-dashboard",
+                "type": "rescorings",
+                "creation_date": "2026-04-27T08:27:29.224000+00:00",
+                "last_update": "2026-04-27T08:27:29.224000+00:00",
+                "responsibles": null,
+                "assignee_mode": null
+            },
+            "data": {
+                "finding": {
+                    "package_name": "golang-runtime",
+                    "cve": "CVE-2026-27143"
+                },
+                "referenced_type": "finding/vulnerability",
+                "severity": "NONE",
+                "user": {
+                    "username": "zkdev",
+                    "type": "github-user",
+                    "github_hostname": "api.github.com"
+                },
+                "matching_rules": [
+                    "custom-rescoring"
+                ],
+                "comment": "(dummy) this is a false positive",
+                "allowed_processing_time": null,
+                "due_date": null
+            },
+            "discovery_date": null,
+            "allowed_processing_time": null
+        },
+        {
+            "artefact": {
+                "component_name": "acme.org/sovereign/notes",
+                "component_version": null,
+                "artefact": {
+                    "artefact_name": null,
+                    "artefact_type": "ociImage",
+                    "artefact_version": null,
+                    "artefact_extra_id": {}
+                },
+                "artefact_kind": "resource",
+                "references": []
+            },
+            "meta": {
+                "datasource": "delivery-dashboard",
+                "type": "rescorings",
+                "creation_date": "2026-04-24T09:44:56.010000+00:00",
+                "last_update": "2026-04-24T09:44:56.010000+00:00",
+                "responsibles": null,
+                "assignee_mode": null
+            },
+            "data": {
+                "finding": {
+                    "package_name": "golang-runtime",
+                    "cve": "CVE-2026-27143"
+                },
+                "referenced_type": "finding/vulnerability",
+                "severity": "NONE",
+                "user": {
+                    "username": "vasu1124",
+                    "type": "github-user",
+                    "github_hostname": "api.github.com"
+                },
+                "matching_rules": [
+                    "custom-rescoring"
+                ],
+                "comment": "not exploitable because ...",
+                "allowed_processing_time": null,
+                "due_date": null
+            },
+            "discovery_date": null,
+            "allowed_processing_time": null
+        }
+    ],
+    "nextCursor": {
+        "meta.creation_date": "2026-04-24T09:44:56.010000+00:00",
+        "id": "4df97d8c0db484adc93b4e6daf33e9b0"
+    }
+}
