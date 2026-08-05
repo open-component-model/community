@@ -479,3 +479,78 @@ func TestGetRenderingInput(t *testing.T) {
 		t.Errorf("OCIResources[rel] = %#v, want %#v", gotRel, wantRel)
 	}
 }
+
+// TestGetRenderingInput_RelativeOciReference tests correct handling for
+// mirrored components: after `ocm transfer`, resources carry a
+// relativeOciReference access. Before this was handled they were silently
+// dropped from OCIResources, so templates rendered an empty repository and tag
+// and the resulting workload got an unusable image reference.
+func TestGetRenderingInput_RelativeOciReference(t *testing.T) {
+	relRes := descriptor.Resource{
+		ElementMeta: descriptor.ElementMeta{
+			ObjectMeta: descriptor.ObjectMeta{Name: "nginx-image"},
+		},
+		Access: &runtime.Raw{
+			Type: runtime.Type{Name: "relativeOciReference", Version: "v1"},
+			Data: []byte(`{"type":"relativeOciReference/v1","reference":"my-components/linuxserver/nginx:1.28.3"}`),
+		},
+	}
+
+	desc := mkDescriptor("acme.org/app", "1.0.0", relRes)
+
+	input, err := GetRenderingInput(desc, "127.0.0.1:5000/my-components")
+	if err != nil {
+		t.Fatalf("GetRenderingInput() error = %v", err)
+	}
+
+	got, ok := input.OCIResources["nginx-image"]
+	if !ok {
+		t.Fatalf("OCIResources missing key %q — relativeOciReference resource was dropped", "nginx-image")
+	}
+
+	want := ImageReference{
+		Host:       "127.0.0.1:5000",
+		Repository: "my-components/linuxserver/nginx",
+		Tag:        "1.28.3",
+	}
+	if got != want {
+		t.Errorf("OCIResources[nginx-image] = %#v, want %#v", got, want)
+	}
+}
+
+// TestRenderRelativeOciReference renders the template, asserting the
+// output is a fully qualified image
+func TestRenderRelativeOciReference(t *testing.T) {
+	relRes := descriptor.Resource{
+		ElementMeta: descriptor.ElementMeta{
+			ObjectMeta: descriptor.ObjectMeta{Name: "nginx-image"},
+		},
+		Access: &runtime.Raw{
+			Type: runtime.Type{Name: "relativeOciReference", Version: "v1"},
+			Data: []byte(`{"type":"relativeOciReference/v1","reference":"my-components/linuxserver/nginx:1.28.3"}`),
+		},
+	}
+
+	input, err := GetRenderingInput(mkDescriptor("acme.org/app", "1.0.0", relRes), "127.0.0.1:5000/my-components")
+	if err != nil {
+		t.Fatalf("GetRenderingInput() error = %v", err)
+	}
+
+	tmpl := &HelmValuesTemplate{
+		ResourceName: "values",
+		TemplateContent: `{{- $nginx := index .OCIResources "nginx-image" }}
+image:
+  repository: {{ $nginx.Host }}/{{ $nginx.Repository }}
+  tag: {{ $nginx.Tag }}`,
+	}
+
+	out, err := Render(tmpl, input, WithYAMLValidation())
+	if err != nil {
+		t.Fatalf("Render() error = %v", err)
+	}
+
+	const want = "\nimage:\n  repository: 127.0.0.1:5000/my-components/linuxserver/nginx\n  tag: 1.28.3"
+	if out != want {
+		t.Errorf("Render() =\n%q\nwant\n%q", out, want)
+	}
+}

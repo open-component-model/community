@@ -87,24 +87,46 @@ func isLocalBlobTypeName(name string) bool {
 	}
 }
 
+// relativeOCIReferenceType is the access type name for an artifact stored in the
+// same OCI registry as the component version referencing it.
+const relativeOCIReferenceType = "relativeOciReference"
+
+// isRelativeOCIReferenceTypeName reports whether a runtime type name identifies
+// the registry-relative OCI access.
+func isRelativeOCIReferenceTypeName(name string) bool {
+	return name == relativeOCIReferenceType
+}
+
+// relativeOCIReferenceAccess mirrors the relativeOciReference access spec
+// payload. Reference is an OCI repository name plus version, and carries no
+// registry host.
+type relativeOCIReferenceAccess struct {
+	Reference string `json:"reference"`
+}
+
 // ResourceOCIReference returns the absolute OCI image reference for a resource
 // backed by OCI content. ok is false when the resource has no resolvable OCI
 // reference: a non-OCI access, or a component-local blob that exists only by
 // digest with no repository path to build from.
 //
-// A resource's access is either an OCIImage, which carries an absolute image
-// reference directly, or a LocalBlob for component-local content. A LocalBlob
-// resolves via its optional GlobalAccess (an absolute OCIImage or OCIImageLayer
-// reference) or, failing that, its ReferenceName — a repository-relative path
-// carrying no registry host.
+// A resource's access is one of three forms:
+//
+//   - OCIImage, which carries an absolute image reference directly.
+//   - LocalBlob, for component-local content. It resolves via its optional
+//     GlobalAccess (an absolute OCIImage or OCIImageLayer reference) or, failing
+//     that, its ReferenceName — a path relative to the repository base URL.
+//   - relativeOciReference, for an artifact in the same registry as the
+//     component version. Its Reference already includes the namespace, so it is
+//     relative to the registry HOST rather than the repository base URL. This is
+//     the form `ocm transfer` produces, so it is what mirrored components carry.
 //
 // The access may be a concrete typed value or, when read back from a repository,
 // an un-decoded *runtime.Raw; both forms are handled.
 //
 // repoBaseURL is the "<host>/<namespace>" the repository was opened with (e.g.
-// "127.0.0.1:5000/my-components"). A host-less ReferenceName is prefixed with it
-// to form a full absolute reference; references that already carry a registry
-// host are returned unchanged.
+// "127.0.0.1:5000/my-components"), and supplies whichever part of the prefix the
+// access form needs: the whole base URL for a LocalBlob ReferenceName, only the
+// registry host for a relativeOciReference.
 func ResourceOCIReference(res descriptor.Resource, repoBaseURL string) (ref string, ok bool, err error) {
 	switch a := res.Access.(type) {
 	case *ociaccessv1.OCIImage:
@@ -138,6 +160,12 @@ func ResourceOCIReference(res descriptor.Resource, repoBaseURL string) (ref stri
 				return "", false, fmt.Errorf("failed to decode LocalBlob access: %w", err)
 			}
 			return localBlobReference(&lb, repoBaseURL)
+		case isRelativeOCIReferenceTypeName(a.Name):
+			var rel relativeOCIReferenceAccess
+			if err := json.Unmarshal(a.Data, &rel); err != nil {
+				return "", false, fmt.Errorf("failed to decode relativeOciReference access: %w", err)
+			}
+			return registryRelativeReference(rel.Reference, repoBaseURL)
 		default:
 			return "", false, nil
 		}
@@ -218,6 +246,37 @@ func absoluteReference(candidate, repoBaseURL string) string {
 		return candidate
 	}
 	return repoBaseURL + "/" + candidate
+}
+
+// registryRelativeReference reconstructs a FULL, host-qualified OCI reference
+// from a relativeOciReference.
+//
+// Unlike absoluteReference this applies no isRegistryHost heuristic. The access
+// type is host-less by definition and the heuristic would misfire on the common case of
+// a namespace whose first segment contains a dot
+func registryRelativeReference(reference, repoBaseURL string) (ref string, ok bool, err error) {
+	if reference == "" {
+		return "", false, nil
+	}
+	host := registryHostOf(repoBaseURL)
+	if host == "" {
+		return reference, true, nil
+	}
+
+	return host + "/" + reference, true, nil
+}
+
+// registryHostOf extracts the registry host from a repository base URL, which
+// may carry a scheme and a namespace path (e.g. "https://127.0.0.1:5000/ns/sub"
+// yields "127.0.0.1:5000"). It returns "" for an empty input.
+func registryHostOf(repoBaseURL string) string {
+	rest := repoBaseURL
+	if _, after, found := strings.Cut(rest, "://"); found {
+		rest = after
+	}
+	host, _, _ := strings.Cut(rest, "/")
+
+	return host
 }
 
 // isRegistryHost reports whether a leading reference segment is a registry host
