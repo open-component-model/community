@@ -257,3 +257,105 @@ func TestResourceOCIReference_LocalBlobReferenceNameAlreadyAbsolute(t *testing.T
 	require.True(t, ok)
 	require.Equal(t, "ghcr.io/acme/app:v1", ref)
 }
+
+// TestResourceOCIReference_RelativeOciReference covers the access type that
+// `ocm transfer` produces: an artifact stored in the same registry as the
+// component version. Its reference already contains the namespace, so only the
+// registry host is prefixed
+func TestResourceOCIReference_RelativeOciReference(t *testing.T) {
+	raw := &runtime.Raw{
+		Type: runtime.Type{Name: "relativeOciReference", Version: "v1"},
+		Data: []byte(`{"type":"relativeOciReference/v1","reference":"my-components/linuxserver/nginx:1.28.3"}`),
+	}
+
+	ref, ok, err := ResourceOCIReference(descriptor.Resource{Access: raw}, "127.0.0.1:5000/my-components")
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, "127.0.0.1:5000/my-components/linuxserver/nginx:1.28.3", ref)
+}
+
+// TestResourceOCIReference_RelativeOciReferenceWithDigest ensures a
+// digest-pinned reference survives intact.
+func TestResourceOCIReference_RelativeOciReferenceWithDigest(t *testing.T) {
+	raw := &runtime.Raw{
+		Type: runtime.Type{Name: "relativeOciReference", Version: "v1"},
+		Data: []byte(`{"type":"relativeOciReference/v1","reference":"my-components/linuxserver/nginx:1.28.3@sha256:eca40c5bede627b5557701bde4b7588a98c07f644221b804b0a9350298400042"}`),
+	}
+
+	ref, ok, err := ResourceOCIReference(descriptor.Resource{Access: raw}, "127.0.0.1:5000/my-components")
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t,
+		"127.0.0.1:5000/my-components/linuxserver/nginx:1.28.3@sha256:eca40c5bede627b5557701bde4b7588a98c07f644221b804b0a9350298400042",
+		ref)
+}
+
+// TestResourceOCIReference_RelativeOciReferenceDottedNamespace guards the reason
+// this path does not reuse absoluteReference's isRegistryHost heuristic; a
+// namespace whose first segment contains a dot must still be prefixed, not
+// mistaken for a registry host.
+func TestResourceOCIReference_RelativeOciReferenceDottedNamespace(t *testing.T) {
+	raw := &runtime.Raw{
+		Type: runtime.Type{Name: "relativeOciReference", Version: "v1"},
+		Data: []byte(`{"type":"relativeOciReference/v1","reference":"my.company/demo/chart:0.1.0"}`),
+	}
+
+	ref, ok, err := ResourceOCIReference(descriptor.Resource{Access: raw}, "127.0.0.1:5000")
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, "127.0.0.1:5000/my.company/demo/chart:0.1.0", ref)
+}
+
+// TestResourceOCIReference_RelativeOciReferenceSchemedBaseURL ensures a base URL
+// carrying a scheme contributes only its host.
+func TestResourceOCIReference_RelativeOciReferenceSchemedBaseURL(t *testing.T) {
+	raw := &runtime.Raw{
+		Type: runtime.Type{Name: "relativeOciReference", Version: "v1"},
+		Data: []byte(`{"type":"relativeOciReference/v1","reference":"my-components/acme/app:v1"}`),
+	}
+
+	ref, ok, err := ResourceOCIReference(descriptor.Resource{Access: raw}, "https://127.0.0.1:5000/my-components")
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, "127.0.0.1:5000/my-components/acme/app:v1", ref)
+}
+
+// TestResourceOCIReference_RelativeOciReferenceNoBaseURL leaves the reference
+// untouched when there is no repository base URL to draw a host from.
+func TestResourceOCIReference_RelativeOciReferenceNoBaseURL(t *testing.T) {
+	raw := &runtime.Raw{
+		Type: runtime.Type{Name: "relativeOciReference", Version: "v1"},
+		Data: []byte(`{"type":"relativeOciReference/v1","reference":"my-components/acme/app:v1"}`),
+	}
+
+	ref, ok, err := ResourceOCIReference(descriptor.Resource{Access: raw}, "")
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, "my-components/acme/app:v1", ref)
+}
+
+// TestResourceOCIReference_RelativeOciReferenceEmpty treats an empty reference as
+// unresolvable rather than emitting a bare host.
+func TestResourceOCIReference_RelativeOciReferenceEmpty(t *testing.T) {
+	raw := &runtime.Raw{
+		Type: runtime.Type{Name: "relativeOciReference", Version: "v1"},
+		Data: []byte(`{"type":"relativeOciReference/v1","reference":""}`),
+	}
+
+	_, ok, err := ResourceOCIReference(descriptor.Resource{Access: raw}, "127.0.0.1:5000/my-components")
+	require.NoError(t, err)
+	require.False(t, ok)
+}
+
+// TestResourceOCIReference_RelativeOciReferenceMalformed surfaces a decode
+// failure rather than silently skipping the resource.
+func TestResourceOCIReference_RelativeOciReferenceMalformed(t *testing.T) {
+	raw := &runtime.Raw{
+		Type: runtime.Type{Name: "relativeOciReference", Version: "v1"},
+		Data: []byte(`{"reference":`),
+	}
+
+	_, ok, err := ResourceOCIReference(descriptor.Resource{Access: raw}, "127.0.0.1:5000/my-components")
+	require.Error(t, err)
+	require.False(t, ok)
+}
