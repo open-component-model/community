@@ -164,7 +164,9 @@ if echo "$OUTPUT3" | grep -q "apiserver:" && \
    echo "$OUTPUT3" | grep -q "etcd:" && \
    echo "$OUTPUT3" | grep -Fq "${REL_ACCESS_HOST}/my-components/opendefensecloud/arc-apiserver" && \
    echo "$OUTPUT3" | grep -Fq "${REL_ACCESS_HOST}/my-components/opendefensecloud/arc-controller-manager" && \
-   echo "$OUTPUT3" | grep -Fq "${REL_ACCESS_HOST}/my-components/coreos/etcd"; then
+   echo "$OUTPUT3" | grep -Fq "${REL_ACCESS_HOST}/my-components/coreos/etcd" && \
+   echo "$OUTPUT3" | grep -Fq "v0.2.0@sha256:18cf724f10393f272f0650ffa4fb3e9a0057799748a34a04d840a35f1998d1ed" && \
+   echo "$OUTPUT3" | grep -Fq "sha256:ea8a4698f22200bf0322fd8ed6e0b106a3107db649bd61f654e1a9fc14d9a17e"; then
 	echo "✓ Test 3 passed: Default template rendered correctly with relative access"
 else
 	echo "✗ Test 3 failed: Default template with relative access output missing expected content"
@@ -181,7 +183,9 @@ if echo "$OUTPUT4" | grep -q "foobar:" && \
    echo "$OUTPUT4" | grep -q "helloworld:" && \
    echo "$OUTPUT4" | grep -Fq "${REL_ACCESS_HOST}/my-components/opendefensecloud/arc-apiserver" && \
    echo "$OUTPUT4" | grep -Fq "${REL_ACCESS_HOST}/my-components/opendefensecloud/arc-controller-manager" && \
-   echo "$OUTPUT4" | grep -Fq "${REL_ACCESS_HOST}/my-components/coreos/etcd"; then
+   echo "$OUTPUT4" | grep -Fq "${REL_ACCESS_HOST}/my-components/coreos/etcd" && \
+   echo "$OUTPUT4" | grep -Fq "v0.2.0@sha256:18cf724f10393f272f0650ffa4fb3e9a0057799748a34a04d840a35f1998d1ed" && \
+   echo "$OUTPUT4" | grep -Fq "sha256:ea8a4698f22200bf0322fd8ed6e0b106a3107db649bd61f654e1a9fc14d9a17e"; then
 	echo "✓ Test 4 passed: Override template rendered correctly with relative access"
 else
 	echo "✗ Test 4 failed: Override template with relative access output missing expected content"
