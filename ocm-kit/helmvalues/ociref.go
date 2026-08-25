@@ -3,6 +3,7 @@ package helmvalues
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 
 	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
@@ -11,6 +12,8 @@ import (
 	ociaccessv1 "ocm.software/open-component-model/bindings/go/oci/spec/access/v1"
 	"ocm.software/open-component-model/bindings/go/runtime"
 )
+
+const OCIImageMediaType = "application/vnd.oci.image.manifest.v1+json"
 
 // ImageReference is the template-facing representation of an OCI image
 // reference. Field shape is a stable public contract.
@@ -85,6 +88,66 @@ func isLocalBlobTypeName(name string) bool {
 	default:
 		return false
 	}
+}
+
+// LocalBlobv2OCIReference implements the special case:
+// - Resource of type "ociArtifact" or "ociImage"
+// - Access of type "LocalBlob/v1":
+//   - with mediaType "application/vnd.oci.image.manifest.v1+json"
+//
+// Such a resource is created, when a local OCI Image is referenced as an input
+// using OCMv2. OCMv2 still allows to access such resources within OCI registries
+// over the reference component-descriptors/<componentName>@<localReference)
+// as described here https://ocm.software/docs/tutorials/working-with-oci/. If possible
+// this function generates such an OCI reference.
+//
+// Note: This access method works even if the image resource have a Reference (the
+// case if it originated from an external OCI registry in the first place) or if
+// GlobalAccess is configured. Thus LocalBlobv2OCIReference will return the reference
+// as described above in such cases. To avoid this try first to dereference using
+// ResourceOCIReference before calling this function.
+//
+// Because it does not have an explicit
+// host configured, repoBaseURL is the "<host>/<namespace>" the repository was opened with (e.g.
+// "127.0.0.1:5000/my-components").
+//
+// The returned ref(erence) is only valid, if ok is true and no error occurred.
+// Ok is false, if all operations work as expected, but the given (res)ource does not
+// fullfill above requirements.
+func LocalBlobv2OCIReference(res descriptor.Resource, repoBaseURL string, componentName string) (ref string, ok bool, err error) {
+	var lb *v2.LocalBlob
+	switch a := res.Access.(type) {
+	case *v2.LocalBlob:
+		lb = a
+	case *descriptor.LocalBlob:
+		lb = &v2.LocalBlob{
+			Type:           a.Type,
+			LocalReference: a.LocalReference,
+			MediaType:      a.MediaType,
+			ReferenceName:  a.ReferenceName,
+			GlobalAccess:   typedToRaw(a.GlobalAccess),
+		}
+	case *runtime.Raw:
+		if a == nil {
+			return "", false, nil
+		}
+		switch {
+		case isLocalBlobTypeName(a.Name):
+			if err := json.Unmarshal(a.Data, &lb); err != nil {
+				return "", false, fmt.Errorf("failed to decode LocalBlob access: %w", err)
+			}
+		}
+	}
+
+	if (lb != nil) && (res.Type == "ociArtifact" || res.Type == "ociImage") && (lb.MediaType == OCIImageMediaType) {
+		ref, err := url.JoinPath("oci://", repoBaseURL, "component-descriptors", componentName)
+		if err != nil {
+			return "", false, err
+		}
+		return fmt.Sprintf("%s:%s@%s", ref, res.Version, lb.LocalReference), true, nil
+	}
+
+	return "", false, nil
 }
 
 // ResourceOCIReference returns the absolute OCI image reference for a resource
