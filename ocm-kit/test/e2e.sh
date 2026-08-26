@@ -43,6 +43,18 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+# Cleanup with trap
+cleanup() {
+	rm -rf "${TMP_DIR}"
+	${DOCKER} buildx rm "${BUILDER_NAME}" || echo "Removal of Buildx oci builder failed"
+}
+trap cleanup EXIT
+
+# Temp directory and creation of OCI-capable, container-based, BuildX builder for embedded OCI image test
+TMP_DIR="$(mktemp -d)"
+BUILDER_NAME=ocibuilder
+${DOCKER} buildx create --driver docker-container --driver-opt image=moby/buildkit:master,network=host --name="${BUILDER_NAME}" --bootstrap
+
 # Check if zot is already running
 if ! ${DOCKER} ps | grep -q zot-registry; then
 	echo "Starting zot registry..."
@@ -206,6 +218,39 @@ else
 	echo "✗ Test 5 failed: Pull secrets output missing expected content"
 	echo "Output was:"
 	echo "$OUTPUT5"
+	exit 1
+fi
+
+# Test 6: Render and pull embedded OCI image
+EMBEDDED_SRC="${TMP_DIR}/embedded"
+TEMP_CTF="${TMP_DIR}/ctf"
+EMBEDDED_CV_VERSION="1.0.0"
+EMBEDDED_CV_NAME="example.org/embedded-example"
+
+echo "Test 6: Rendering with embedded OCI image"
+echo "Copy required files into temporary directory ..."
+cp -r "${SCRIPT_DIR}/fixtures/embedded" "${TMP_DIR}"
+echo "Build hello-world example image as local OCI image tarball"
+${DOCKER} buildx build --builder ocibuilder --output type=oci,dest="${EMBEDDED_SRC}/image.oci.tgz" "${EMBEDDED_SRC}"
+echo "Create local CTF with embedded example component version and transfer CV to Zot registry ..."
+(cd "${EMBEDDED_SRC}" && ${OCM} add cv --repository ctf::${TEMP_CTF})
+${OCM} transfer cv --copy-resources ctf::"${TEMP_CTF}//${EMBEDDED_CV_NAME}" http://localhost:5000/my-components
+echo "Call ocm-kit ..."
+OUTPUT6=$(${GO} run cmd/ocm-kit/main.go "http://localhost:5000/my-components//${EMBEDDED_CV_NAME}:${EMBEDDED_CV_VERSION}" -r helm-chart | tr -d '\n')
+if echo "$OUTPUT6" | grep -q "localhost:5000/my-components/component-descriptors/${EMBEDDED_CV_NAME}\(:[a-zA-Z0-9_.-]\{0,127\}\)\?@sha256:[A-Fa-f0-9]\{64\}";
+then
+	if ! OUTPUT6_1=$(${DOCKER} run "$OUTPUT6"); then
+		echo "✗ Test 6 failed: could not use OCI reference $OUTPUT6"
+		echo "Output was:"
+		echo "$OUTPUT6_1"
+		exit 1
+	else
+		echo "✓ Test 6 passed: usable component-descriptor based OCI reference ($OUTPUT6) was returned"
+	fi
+else
+	echo "✗ Test 6 failed: no component-descriptor based OCI reference was returned"
+	echo "Output was:"
+	echo "$OUTPUT6"
 	exit 1
 fi
 

@@ -169,6 +169,12 @@ func GetRenderingInput(desc *descriptor.Descriptor, repoBaseURL string) (*Render
 			return nil, fmt.Errorf("failed to resolve OCI reference for resource %q: %w", res.Name, err)
 		}
 		if !ok {
+			ref, ok, err = LocalBlobv2OCIReference(res, repoBaseURL, desc.Component.Name)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve OCI reference for resource %q: %w", res.Name, err)
+			}
+		}
+		if !ok {
 			continue
 		}
 
