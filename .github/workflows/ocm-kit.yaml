@@ -28,7 +28,7 @@ jobs:
           echo "golangci=$(grep golangci-lint tools.lock | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+')" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: ${{ steps.versions.outputs.go }}
+          go-version-file: ocm-kit/go.mod
           cache-dependency-path: ocm-kit/go.sum
       - name: Build
         run: go build ./...
