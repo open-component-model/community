@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"path"
+	"regexp"
 	"strings"
 
 	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
@@ -14,6 +16,8 @@ import (
 )
 
 const OCIImageMediaType = "application/vnd.oci.image.manifest.v1+json"
+
+var schemePattern = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9+.-]*://`)
 
 // ImageReference is the template-facing representation of an OCI image
 // reference. Field shape is a stable public contract.
@@ -140,10 +144,11 @@ func LocalBlobv2OCIReference(res descriptor.Resource, repoBaseURL string, compon
 	}
 
 	if (lb != nil) && (res.Type == "ociArtifact" || res.Type == "ociImage") && (lb.MediaType == OCIImageMediaType) {
-		ref, err := url.JoinPath("oci://", repoBaseURL, "component-descriptors", componentName)
+		ref, err := joinRef(repoBaseURL, "component-descriptors", componentName)
 		if err != nil {
-			return "", false, err
+			return "", false, fmt.Errorf("join reference: %w", err)
 		}
+
 		return fmt.Sprintf("%s:%s@%s", ref, res.Version, lb.LocalReference), true, nil
 	}
 
@@ -323,4 +328,12 @@ func typedToRaw(t runtime.Typed) *runtime.Raw {
 		return nil
 	}
 	return &runtime.Raw{Type: t.GetType(), Data: data}
+}
+
+// Join URLs with support of hosts without scheme (e.g. localhost:1234/foo/bar)
+func joinRef(base string, part ...string) (string, error) {
+	if schemePattern.MatchString(base) {
+		return url.JoinPath(base, part...)
+	}
+	return path.Join(append([]string{base}, part...)...), nil
 }

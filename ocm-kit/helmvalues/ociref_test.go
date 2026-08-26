@@ -370,7 +370,7 @@ func TestLocalBlobv2OCIReference(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			ref, ok, err := LocalBlobv2OCIReference(tt.Resource, "localhost:1234/components", "example.org/component")
+			ref, ok, err := LocalBlobv2OCIReference(tt.Resource, "oci://localhost:1234/components", "example.org/component")
 			if tt.WantErr {
 				assert.Error(t, err)
 			} else {
