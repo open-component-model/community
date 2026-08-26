@@ -5,7 +5,7 @@ on:
       - 'ocm-kit/**'
       - '.github/workflows/ocm-kit.yaml'
   push:
-    branches: [ main, build-test ]
+    branches: [ main ]
     paths:
       - 'ocm-kit/**'
       - '.github/workflows/ocm-kit.yaml'
