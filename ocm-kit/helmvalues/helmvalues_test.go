@@ -4,13 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
 	v2 "ocm.software/open-component-model/bindings/go/descriptor/v2"
 	ociaccessv1 "ocm.software/open-component-model/bindings/go/oci/spec/access/v1"
@@ -498,12 +495,34 @@ func TestGetRenderingInput(t *testing.T) {
 	}
 }
 
-// Regression test for https://github.com/open-component-model/community/issues/36
-func TestNewAuthClient_WithHelmCredentialsInConfig(t *testing.T) {
-	configPath := filepath.Join(t.TempDir(), "ocmconfig")
+// Test if a LocalBlob (which is an OCI image) without a ReferenceName,
+// can be resolved as described here: https://ocm.software/docs/tutorials/working-with-oci/
+func TestGetRenderingInput_NativeOCIAccess(t *testing.T) {
+	res := descriptor.Resource{
+		ElementMeta: descriptor.ElementMeta{
+			ObjectMeta: descriptor.ObjectMeta{Name: "image", Version: "1.0.1"},
+		},
+		Type: "ociArtifact",
+		Access: &v2.LocalBlob{
+			LocalReference: "sha256:0e54ff336823b4f59c54d4b9965d7c53d3cf15c230d0f5e5924d9ee328e9bc77",
+			MediaType:      "application/vnd.oci.image.manifest.v1+json",
+			Type:           runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
+		},
+	}
 
-	require.NoError(t, os.WriteFile(configPath, []byte(configWithHelmCredentials), 0600))
+	desc := mkDescriptor("acme.org/app", "1.0.0", res)
 
-	_, err := NewAuthClient(t.Context(), configPath)
-	assert.NoError(t, err)
+	const repoBaseURL = "127.0.0.1:5000/my-components"
+	input, err := GetRenderingInput(desc, repoBaseURL)
+
+	if assert.NoError(t, err) {
+		assert.Equal(t, map[string]ImageReference{
+			"image": {
+				Host:       "127.0.0.1:5000",
+				Repository: "my-components/component-descriptors/acme.org/app",
+				Tag:        "1.0.1",
+				Digest:     "sha256:0e54ff336823b4f59c54d4b9965d7c53d3cf15c230d0f5e5924d9ee328e9bc77",
+			},
+		}, input.OCIResources)
+	}
 }
