@@ -5,7 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
 
-    # Provides pinned Go toolchain versions as go_<major>_<minor> packages.
+    # Provides exact Go toolchains as `pkgs.go-bin.versions."X.Y.Z"`.
     go-overlay = {
       url = "github:purpleclay/go-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -25,9 +25,7 @@
           overlays = [ go-overlay.overlays.default ];
         };
 
-        goAttr = "go_" + builtins.concatStringsSep "_"
-          (pkgs.lib.take 2 (pkgs.lib.splitString "." goVersion));
-        go = pkgs.${goAttr};
+        go = pkgs.go-bin.versions.${goVersion};
       in
       {
         devShells.default = pkgs.mkShell {
