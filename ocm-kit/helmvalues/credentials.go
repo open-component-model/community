@@ -45,6 +45,7 @@ func NewAuthClient(ctx context.Context, ocmConfigPath string) (*auth.Client, err
 	if err != nil {
 		return nil, err
 	}
+	credConfig.Consumers = filterOCIRegistryConsumers(credConfig.Consumers)
 
 	// Ensure the implicit docker config is resolvable by injecting a default
 	// (empty) DockerConfig/v1 repository when none is configured. An empty
@@ -116,6 +117,30 @@ func ociRegistryIdentity(hostport string) (runtime.Identity, error) {
 	}
 	identity.SetType(ociidentityv1.Type)
 	return identity, nil
+}
+
+// filterOCIRegistryConsumers drops non-OCIRegistry identities from each
+// consumer, and the consumer entirely if none remain. OCM configs may declare
+// consumers for other systems (e.g. HelmChartRepository credentials for Helm
+// chart repos); this client only wires up plugin-based resolution for OCI
+// credential types, so leaving such consumers in would otherwise trip
+// plugin-based credential resolution against a nil CredentialPluginProvider.
+func filterOCIRegistryConsumers(consumers []credcfgruntime.Consumer) []credcfgruntime.Consumer {
+	filtered := make([]credcfgruntime.Consumer, 0, len(consumers))
+	for _, consumer := range consumers {
+		identities := make([]runtime.Identity, 0, len(consumer.Identities))
+		for _, identity := range consumer.Identities {
+			if typ, err := identity.ParseType(); err == nil && typ.Equal(ociidentityv1.Type) {
+				identities = append(identities, identity)
+			}
+		}
+		if len(identities) == 0 {
+			continue
+		}
+		consumer.Identities = identities
+		filtered = append(filtered, consumer)
+	}
+	return filtered
 }
 
 // loadCredentialConfig loads the credentials config from the resolved OCM config
