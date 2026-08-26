@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
@@ -256,4 +257,129 @@ func TestResourceOCIReference_LocalBlobReferenceNameAlreadyAbsolute(t *testing.T
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Equal(t, "ghcr.io/acme/app:v1", ref)
+}
+
+// TestLocalBlobv2OCIReference ensures that LocalBlobv2OCIReference returns
+// references like "oci://<repoBaseUrl>/component-descriptors/<componentName>:<resourceVersion>@<localReference>"
+// only for LocalBlobs, which have the mediaType application/vnd.oci.image.manifest.v1+json
+// and resource type "ociArtifact" or "ociImage". (See https://ocm.software/docs/tutorials/working-with-oci/)
+func TestLocalBlobv2OCIReference(t *testing.T) {
+	data, err := json.Marshal(v2.LocalBlob{
+		Type:           runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
+		LocalReference: "sha256:83f4282d88d92266a8517330477ac6cc8e1cf7724d569087bab5367df3b083d6",
+		MediaType:      OCIImageMediaType,
+	})
+	require.NoError(t, err)
+
+	successfulCall := func(t assert.TestingT, err error, ok bool, reference string) {
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		assert.Equal(t, "oci://localhost:1234/components/component-descriptors/example.org/component:7@sha256:83f4282d88d92266a8517330477ac6cc8e1cf7724d569087bab5367df3b083d6", reference)
+	}
+
+	noErrorInvalidType := func(t assert.TestingT, err error, ok bool, reference string) {
+		assert.NoError(t, err)
+		assert.False(t, ok)
+	}
+
+	tests := []struct {
+		Name         string
+		Resource     descriptor.Resource
+		CheckResults func(t assert.TestingT, err error, ok bool, reference string) // required
+	}{
+		{
+			Name: "v2.LocalBlob access with supported mediaType and type",
+			Resource: descriptor.Resource{
+				Access: &v2.LocalBlob{
+					Type:           runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
+					LocalReference: "sha256:83f4282d88d92266a8517330477ac6cc8e1cf7724d569087bab5367df3b083d6",
+					MediaType:      OCIImageMediaType,
+				},
+				Type: "ociImage",
+				ElementMeta: descriptor.ElementMeta{
+					ObjectMeta: descriptor.ObjectMeta{
+						Version: "7",
+					},
+				},
+			},
+			CheckResults: successfulCall,
+		},
+		{
+			Name: "descriptor.LocalBlob access with supported mediaType and type",
+			Resource: descriptor.Resource{
+				Access: &descriptor.LocalBlob{
+					Type:           runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
+					LocalReference: "sha256:83f4282d88d92266a8517330477ac6cc8e1cf7724d569087bab5367df3b083d6",
+					MediaType:      OCIImageMediaType,
+				},
+				Type: "ociImage",
+				ElementMeta: descriptor.ElementMeta{
+					ObjectMeta: descriptor.ObjectMeta{
+						Version: "7",
+					},
+				},
+			},
+			CheckResults: successfulCall,
+		},
+		{
+			Name: "runtime.Raw access with supported mediaType and type",
+			Resource: descriptor.Resource{
+				Access: &runtime.Raw{
+					Data: data,
+					Type: runtime.Type{
+						Name:    v2.LocalBlobAccessType,
+						Version: v2.LocalBlobAccessTypeVersion,
+					},
+				},
+				Type: "ociArtifact",
+				ElementMeta: descriptor.ElementMeta{
+					ObjectMeta: descriptor.ObjectMeta{
+						Version: "7",
+					},
+				},
+			},
+			CheckResults: successfulCall,
+		},
+		{
+			Name: "v2.LocalBlob access with unsupported mediaType and supported type",
+			Resource: descriptor.Resource{
+				Access: &v2.LocalBlob{
+					Type:           runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
+					LocalReference: "sha256:83f4282d88d92266a8517330477ac6cc8e1cf7724d569087bab5367df3b083d6",
+					MediaType:      "application/text",
+				},
+				Type: "ociImage",
+				ElementMeta: descriptor.ElementMeta{
+					ObjectMeta: descriptor.ObjectMeta{
+						Version: "7",
+					},
+				},
+			},
+			CheckResults: noErrorInvalidType,
+		},
+		{
+			Name: "v2.LocalBlob access with supported mediaType and unsupported type",
+			Resource: descriptor.Resource{
+				Access: &v2.LocalBlob{
+					Type:           runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
+					LocalReference: "sha256:83f4282d88d92266a8517330477ac6cc8e1cf7724d569087bab5367df3b083d6",
+					MediaType:      OCIImageMediaType,
+				},
+				Type: "picture",
+				ElementMeta: descriptor.ElementMeta{
+					ObjectMeta: descriptor.ObjectMeta{
+						Version: "7",
+					},
+				},
+			},
+			CheckResults: noErrorInvalidType,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			ref, ok, err := LocalBlobv2OCIReference(tt.Resource, "oci://localhost:1234/components", "example.org/component")
+			tt.CheckResults(t, err, ok, ref)
+		})
+	}
 }
