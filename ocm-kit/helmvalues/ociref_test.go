@@ -271,12 +271,21 @@ func TestLocalBlobv2OCIReference(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	successfulCall := func(t assert.TestingT, err error, ok bool, reference string) {
+		assert.NoError(t, err)
+		assert.True(t, ok)
+		assert.Equal(t, "oci://localhost:1234/components/component-descriptors/example.org/component:7@sha256:83f4282d88d92266a8517330477ac6cc8e1cf7724d569087bab5367df3b083d6", reference)
+	}
+
+	noErrorInvalidType := func(t assert.TestingT, err error, ok bool, reference string) {
+		assert.NoError(t, err)
+		assert.False(t, ok)
+	}
+
 	tests := []struct {
-		Name          string
-		Resource      descriptor.Resource
-		WantErr       bool
-		WantOk        bool
-		WantReference string
+		Name         string
+		Resource     descriptor.Resource
+		CheckResults func(t assert.TestingT, err error, ok bool, reference string) // required
 	}{
 		{
 			Name: "v2.LocalBlob access with supported mediaType and type",
@@ -293,8 +302,7 @@ func TestLocalBlobv2OCIReference(t *testing.T) {
 					},
 				},
 			},
-			WantOk:        true,
-			WantReference: "oci://localhost:1234/components/component-descriptors/example.org/component:7@sha256:83f4282d88d92266a8517330477ac6cc8e1cf7724d569087bab5367df3b083d6",
+			CheckResults: successfulCall,
 		},
 		{
 			Name: "descriptor.LocalBlob access with supported mediaType and type",
@@ -311,8 +319,7 @@ func TestLocalBlobv2OCIReference(t *testing.T) {
 					},
 				},
 			},
-			WantOk:        true,
-			WantReference: "oci://localhost:1234/components/component-descriptors/example.org/component:7@sha256:83f4282d88d92266a8517330477ac6cc8e1cf7724d569087bab5367df3b083d6",
+			CheckResults: successfulCall,
 		},
 		{
 			Name: "runtime.Raw access with supported mediaType and type",
@@ -331,8 +338,7 @@ func TestLocalBlobv2OCIReference(t *testing.T) {
 					},
 				},
 			},
-			WantOk:        true,
-			WantReference: "oci://localhost:1234/components/component-descriptors/example.org/component:7@sha256:83f4282d88d92266a8517330477ac6cc8e1cf7724d569087bab5367df3b083d6",
+			CheckResults: successfulCall,
 		},
 		{
 			Name: "v2.LocalBlob access with unsupported mediaType and supported type",
@@ -349,6 +355,7 @@ func TestLocalBlobv2OCIReference(t *testing.T) {
 					},
 				},
 			},
+			CheckResults: noErrorInvalidType,
 		},
 		{
 			Name: "v2.LocalBlob access with supported mediaType and unsupported type",
@@ -365,19 +372,14 @@ func TestLocalBlobv2OCIReference(t *testing.T) {
 					},
 				},
 			},
+			CheckResults: noErrorInvalidType,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
 			ref, ok, err := LocalBlobv2OCIReference(tt.Resource, "oci://localhost:1234/components", "example.org/component")
-			if tt.WantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-			assert.Equal(t, tt.WantOk, ok)
-			assert.Equal(t, tt.WantReference, ref)
+			tt.CheckResults(t, err, ok, ref)
 		})
 	}
 }
