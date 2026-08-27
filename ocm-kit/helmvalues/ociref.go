@@ -176,19 +176,25 @@ func LocalBlobv2OCIReference(res descriptor.Resource, repoBaseURL string, compon
 func ResourceOCIReference(res descriptor.Resource, repoBaseURL string) (ref string, ok bool, err error) {
 	switch a := res.Access.(type) {
 	case *ociaccessv1.OCIImage:
-		return a.ImageReference, true, nil
+		ref, ok = a.ImageReference, true
 	case *v2.LocalBlob:
-		return localBlobReference(a, repoBaseURL)
+		ref, ok, err = localBlobReference(a, repoBaseURL)
+		if err != nil {
+			return "", false, fmt.Errorf("determine local blob address for resource %s: %w", res.Name, err)
+		}
 	case *descriptor.LocalBlob:
 		// GlobalAccess is a runtime.Typed here; normalize it into the raw
 		// envelope form so a single LocalBlob code path handles both.
-		return localBlobReference(&v2.LocalBlob{
+		ref, ok, err = localBlobReference(&v2.LocalBlob{
 			Type:           a.Type,
 			LocalReference: a.LocalReference,
 			MediaType:      a.MediaType,
 			ReferenceName:  a.ReferenceName,
 			GlobalAccess:   typedToRaw(a.GlobalAccess),
 		}, repoBaseURL)
+		if err != nil {
+			return "", false, fmt.Errorf("determine local blob address for resource %s: %w", res.Name, err)
+		}
 	case *runtime.Raw:
 		if a == nil {
 			return "", false, nil
@@ -199,19 +205,31 @@ func ResourceOCIReference(res descriptor.Resource, repoBaseURL string) (ref stri
 			if err := json.Unmarshal(a.Data, &img); err != nil {
 				return "", false, fmt.Errorf("failed to decode OCIImage access: %w", err)
 			}
-			return img.ImageReference, true, nil
+			ref, ok = img.ImageReference, true
 		case isLocalBlobTypeName(a.Name):
 			var lb v2.LocalBlob
 			if err := json.Unmarshal(a.Data, &lb); err != nil {
 				return "", false, fmt.Errorf("failed to decode LocalBlob access: %w", err)
 			}
-			return localBlobReference(&lb, repoBaseURL)
+			ref, ok, err = localBlobReference(&lb, repoBaseURL)
+			if err != nil {
+				return "", false, fmt.Errorf("determine local blob address for resource %s: %w", res.Name, err)
+			}
 		default:
 			return "", false, nil
 		}
 	default:
 		return "", false, nil
 	}
+
+	imageReference, err := ParseOCIRef(ref)
+	if err != nil {
+		return "", false, fmt.Errorf("parsing %s: %w", ref, err)
+	}
+	if imageReference.Digest == "" {
+		imageReference.Digest = getDigest(res)
+	}
+	return imageReference.String(), ok, err
 }
 
 // localBlobReference resolves a component-local LocalBlob to an absolute OCI
@@ -328,6 +346,28 @@ func typedToRaw(t runtime.Typed) *runtime.Raw {
 		return nil
 	}
 	return &runtime.Raw{Type: t.GetType(), Data: data}
+}
+
+// If the resource has a suitable digest attached this function returns it a OCI digest format.
+// Otherwise an empty string is returned.
+func getDigest(res descriptor.Resource) string {
+	if res.Digest != nil {
+		var hashPrefix string
+		switch res.Digest.HashAlgorithm {
+		case "SHA-256":
+			hashPrefix = "sha256"
+		case "SHA-512":
+			hashPrefix = "sha512"
+		default:
+			hashPrefix = ""
+			fmt.Println("Unsupported hash algorithm " + res.Digest.HashAlgorithm)
+		}
+		if hashPrefix != "" {
+			return fmt.Sprintf("%s:%s", hashPrefix, res.Digest.Value)
+		}
+	}
+
+	return ""
 }
 
 // Join URLs with support of hosts without scheme (e.g. localhost:1234/foo/bar)
