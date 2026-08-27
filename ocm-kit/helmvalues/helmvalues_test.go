@@ -4,15 +4,32 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
 	v2 "ocm.software/open-component-model/bindings/go/descriptor/v2"
 	ociaccessv1 "ocm.software/open-component-model/bindings/go/oci/spec/access/v1"
 	"ocm.software/open-component-model/bindings/go/runtime"
 )
+
+const configWithHelmCredentials = `
+type: generic.config.ocm.software/v1
+configurations:
+  - type: credentials.config.ocm.software
+    consumers:
+      - identities:
+          - type: HelmChartRepository
+            hostname: example.org 
+        credentials:
+          - type: HelmHTTPCredentials/v1
+            username: anything
+            password: anything
+`
 
 // TestRender tests the Render function with various template scenarios
 func TestRender(t *testing.T) {
@@ -511,4 +528,14 @@ func TestGetRenderingInput_NativeOCIAccess(t *testing.T) {
 			},
 		}, input.OCIResources)
 	}
+}
+
+// Regression test for https://github.com/open-component-model/community/issues/36
+func TestNewAuthClient_WithHelmCredentialsInConfig(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "ocmconfig")
+
+	require.NoError(t, os.WriteFile(configPath, []byte(configWithHelmCredentials), 0600))
+
+	_, err := NewAuthClient(t.Context(), configPath)
+	assert.NoError(t, err)
 }
