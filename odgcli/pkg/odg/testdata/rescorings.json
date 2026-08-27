@@ -1,0 +1,143 @@
+[
+    {
+        "finding": {
+            "severity": "MEDIUM",
+            "package_name": "golang-runtime",
+            "package_versions": [
+                "1.26.2"
+            ],
+            "cve": "CVE-2026-39819",
+            "cvss_v3_score": 4.4,
+            "cvss": "AV:L/AC:L/PR:L/UI:R/S:U/C:N/I:H/A:N",
+            "summary": "Golang Go on Linux Systems Vulnerable to Arbitrary File Overwrites via 'go bug' Command Predictable Temporary Filename Flaw",
+            "urls": [
+                "https://nvd.nist.gov/vuln/detail/CVE-2026-39819"
+            ],
+            "filesystem_paths": [
+                {
+                    "path": [
+                        {
+                            "path": "ocmcli-image_0.40.0_ocm.software_ocmcli_ociImage_1681428d-59ac-48f7-86d3-242bf7dd2d46",
+                            "type": "tar"
+                        },
+                        {
+                            "path": "sha256:b7156fa15b040f79867c7bf7bd161cc2172abecb9c127878409038af63660a32.tar",
+                            "type": "tar"
+                        },
+                        {
+                            "path": "usr/local/bin/ocm",
+                            "type": "elf"
+                        }
+                    ],
+                    "digest": "f058fb4dfb3ed99da907b8d1c8f43b3bb076093a"
+                }
+            ]
+        },
+        "finding_type": "finding/vulnerability",
+        "severity": "MEDIUM",
+        "matching_rules": [
+            "original-severity"
+        ],
+        "applicable_rescorings": [],
+        "discovery_date": "2026-04-10",
+        "due_date": "2026-07-09",
+        "sprint": {
+            "name": "2026-week-28",
+            "end_date": "2026-07-16"
+        }
+    },
+    {
+        "finding": {
+            "severity": "HIGH",
+            "package_name": "go-yaml",
+            "package_versions": [
+                "v1.18.0"
+            ],
+            "cve": "CVE-2022-3064",
+            "cvss_v3_score": 7.5,
+            "cvss": "AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+            "summary": "Parsing malicious or large YAML documents can consume excessive amounts of CPU or memory.",
+            "urls": [
+                "https://nvd.nist.gov/vuln/detail/CVE-2022-3064"
+            ],
+            "filesystem_paths": [
+                {
+                    "path": [
+                        {
+                            "path": "ocmcli-image_0.40.0_ocm.software_ocmcli_ociImage_1681428d-59ac-48f7-86d3-242bf7dd2d46",
+                            "type": "tar"
+                        },
+                        {
+                            "path": "sha256:b7156fa15b040f79867c7bf7bd161cc2172abecb9c127878409038af63660a32.tar",
+                            "type": "tar"
+                        },
+                        {
+                            "path": "usr/local/bin/ocm",
+                            "type": "elf"
+                        }
+                    ],
+                    "digest": "f058fb4dfb3ed99da907b8d1c8f43b3bb076093a"
+                }
+            ]
+        },
+        "finding_type": "finding/vulnerability",
+        "severity": "HIGH",
+        "matching_rules": [
+            "original-severity"
+        ],
+        "applicable_rescorings": [],
+        "discovery_date": "2026-04-08",
+        "due_date": "2026-05-08",
+        "sprint": {
+            "name": "2026-week-20",
+            "end_date": "2026-05-21"
+        }
+    },
+    {
+        "finding": {
+            "severity": "HIGH",
+            "package_name": "go-yaml",
+            "package_versions": [
+                "v1.18.0"
+            ],
+            "cve": "CVE-2022-28948",
+            "cvss_v3_score": 7.5,
+            "cvss": "AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+            "summary": "An issue in the Unmarshal function in Go-Yaml v3 causes the program to crash when attempting to deserialize invalid input.",
+            "urls": [
+                "https://nvd.nist.gov/vuln/detail/CVE-2022-28948"
+            ],
+            "filesystem_paths": [
+                {
+                    "path": [
+                        {
+                            "path": "ocmcli-image_0.40.0_ocm.software_ocmcli_ociImage_1681428d-59ac-48f7-86d3-242bf7dd2d46",
+                            "type": "tar"
+                        },
+                        {
+                            "path": "sha256:b7156fa15b040f79867c7bf7bd161cc2172abecb9c127878409038af63660a32.tar",
+                            "type": "tar"
+                        },
+                        {
+                            "path": "usr/local/bin/ocm",
+                            "type": "elf"
+                        }
+                    ],
+                    "digest": "f058fb4dfb3ed99da907b8d1c8f43b3bb076093a"
+                }
+            ]
+        },
+        "finding_type": "finding/vulnerability",
+        "severity": "HIGH",
+        "matching_rules": [
+            "original-severity"
+        ],
+        "applicable_rescorings": [],
+        "discovery_date": "2026-04-08",
+        "due_date": "2026-05-08",
+        "sprint": {
+            "name": "2026-week-20",
+            "end_date": "2026-05-21"
+        }
+    }
+]

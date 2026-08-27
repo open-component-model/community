@@ -1,0 +1,46 @@
+{
+    "items": [
+        {
+            "artefact": {
+                "component_name": "acme.org/sovereign/redis",
+                "component_version": "7.0.0",
+                "artefact": {
+                    "artefact_name": "redis-image",
+                    "artefact_type": "ociImage",
+                    "artefact_version": "7.0.0",
+                    "artefact_extra_id": {}
+                },
+                "artefact_kind": "resource",
+                "references": []
+            },
+            "meta": {
+                "datasource": "delivery-dashboard",
+                "type": "rescorings",
+                "creation_date": "2026-04-20T12:00:00.000000+00:00",
+                "last_update": "2026-04-20T12:00:00.000000+00:00",
+                "responsibles": null,
+                "assignee_mode": null
+            },
+            "data": {
+                "finding": {
+                    "package_name": "redis",
+                    "cve": "CVE-2026-99999"
+                },
+                "referenced_type": "finding/vulnerability",
+                "severity": "LOW",
+                "user": {
+                    "username": "testuser",
+                    "type": "githubUser",
+                    "github_hostname": "github.com"
+                },
+                "matching_rules": [],
+                "comment": "Low risk, no action needed",
+                "allowed_processing_time": null,
+                "due_date": null
+            },
+            "discovery_date": null,
+            "allowed_processing_time": null
+        }
+    ],
+    "nextCursor": null
+}
