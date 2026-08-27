@@ -20,15 +20,15 @@ jobs:
         working-directory: ocm-kit
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      # Source the Go and golangci-lint versions from the dev flake and tools.lock
-      # so CI uses the same toolchain as local development.
+      # Source the golangci-lint versions from tools.lock
+      # so that CI tools uses the same toolchain as local development
+      # except Go version which used the version in go.mod
       - id: versions
         run: |
-          echo "go=$(grep -oE 'goVersion = "[^"]+"' flake.nix | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')" >> "$GITHUB_OUTPUT"
           echo "golangci=$(grep golangci-lint tools.lock | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+')" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: ${{ steps.versions.outputs.go }}
+          go-version-file: ocm-kit/go.mod
           cache-dependency-path: ocm-kit/go.sum
       - name: Build
         run: go build ./...

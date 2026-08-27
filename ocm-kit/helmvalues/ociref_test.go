@@ -14,6 +14,16 @@ import (
 	"ocm.software/open-component-model/bindings/go/runtime"
 )
 
+const testDigest = "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
+
+func getTestDigestDescriptor() *descriptor.Digest {
+	return &descriptor.Digest{
+		HashAlgorithm:          "SHA-256",
+		NormalisationAlgorithm: "genericBlobDigest/v1",
+		Value:                  testDigest,
+	}
+}
+
 func TestParseOCIRef(t *testing.T) {
 	ref, err := ParseOCIRef("ghcr.io/acme/app:v1.2.3")
 	require.NoError(t, err)
@@ -121,11 +131,12 @@ func ociImageRaw(t *testing.T, ref string) *runtime.Raw {
 // reference into GlobalAccess, and it is returned as-is.
 func TestResourceOCIReference_LocalBlobGlobalAccess(t *testing.T) {
 	res := descriptor.Resource{
+		Digest: getTestDigestDescriptor(),
 		Access: &v2.LocalBlob{
 			Type:           runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
 			LocalReference: "sha256:deadbeef",
 			MediaType:      "application/octet-stream",
-			GlobalAccess:   ociImageRaw(t, "ghcr.io/acme/app@sha256:deadbeef"),
+			GlobalAccess:   ociImageRaw(t, "ghcr.io/acme/app@sha256:7858bc2b9fa2e1e8edd6d30872a12572b3b026723de08c2f2a0714713cd76239"),
 		},
 	}
 	// GlobalAccess already yields an absolute reference (has a host): the base
@@ -133,7 +144,7 @@ func TestResourceOCIReference_LocalBlobGlobalAccess(t *testing.T) {
 	ref, ok, err := ResourceOCIReference(res, "127.0.0.1:5000/my-components")
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.Equal(t, "ghcr.io/acme/app@sha256:deadbeef", ref)
+	require.Equal(t, "ghcr.io/acme/app@sha256:7858bc2b9fa2e1e8edd6d30872a12572b3b026723de08c2f2a0714713cd76239", ref)
 }
 
 // TestResourceOCIReference_LocalBlobRaw covers the read-back form: the access
@@ -144,16 +155,18 @@ func TestResourceOCIReference_LocalBlobRaw(t *testing.T) {
 		Type:           runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
 		LocalReference: "sha256:deadbeef",
 		MediaType:      "application/octet-stream",
-		GlobalAccess:   ociImageRaw(t, "ghcr.io/acme/app@sha256:deadbeef"),
+		GlobalAccess:   ociImageRaw(t, "ghcr.io/acme/app@sha256:7858bc2b9fa2e1e8edd6d30872a12572b3b026723de08c2f2a0714713cd76239"),
 	}
 	data, err := json.Marshal(lb)
 	require.NoError(t, err)
 	raw := &runtime.Raw{Type: lb.Type, Data: data}
 
-	ref, ok, err := ResourceOCIReference(descriptor.Resource{Access: raw}, "127.0.0.1:5000/my-components")
+	ref, ok, err := ResourceOCIReference(descriptor.Resource{
+		Digest: getTestDigestDescriptor(),
+		Access: raw}, "127.0.0.1:5000/my-components")
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.Equal(t, "ghcr.io/acme/app@sha256:deadbeef", ref)
+	require.Equal(t, "ghcr.io/acme/app@sha256:7858bc2b9fa2e1e8edd6d30872a12572b3b026723de08c2f2a0714713cd76239", ref)
 }
 
 // TestResourceOCIReference_LocalBlobGlobalOCIImageLayer covers the non-manifest
@@ -162,11 +175,12 @@ func TestResourceOCIReference_LocalBlobRaw(t *testing.T) {
 func TestResourceOCIReference_LocalBlobGlobalOCIImageLayer(t *testing.T) {
 	layerData, err := json.Marshal(&ociaccessv1.OCIImageLayer{
 		Type:      runtime.NewVersionedType(ociaccessv1.OCIImageLayerType, "v1"),
-		Reference: "ghcr.io/acme/app@sha256:cafebabe",
+		Reference: "ghcr.io/acme/app@sha256:8fe2074638b1b17b1095893965395cd5f5fd246550472898a271b3df96a98511",
 		MediaType: "application/octet-stream",
 	})
 	require.NoError(t, err)
 	res := descriptor.Resource{
+		Digest: getTestDigestDescriptor(),
 		Access: &v2.LocalBlob{
 			Type:           runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
 			LocalReference: "sha256:cafebabe",
@@ -176,7 +190,7 @@ func TestResourceOCIReference_LocalBlobGlobalOCIImageLayer(t *testing.T) {
 	ref, ok, err := ResourceOCIReference(res, "127.0.0.1:5000/my-components")
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.Equal(t, "ghcr.io/acme/app@sha256:cafebabe", ref)
+	require.Equal(t, "ghcr.io/acme/app@sha256:8fe2074638b1b17b1095893965395cd5f5fd246550472898a271b3df96a98511", ref)
 }
 
 // TestResourceOCIReference_LocalBlobRuntimeForm covers the runtime.LocalBlob
@@ -257,6 +271,21 @@ func TestResourceOCIReference_LocalBlobReferenceNameAlreadyAbsolute(t *testing.T
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Equal(t, "ghcr.io/acme/app:v1", ref)
+}
+
+// TestResourceOCIReference_LocalBlobReferenceNameAlreadyAbsolute ensures processing of digest information.
+func TestResourceOCIReference_LocalBlobReferenceNameDigest(t *testing.T) {
+	res := descriptor.Resource{
+		Digest: getTestDigestDescriptor(),
+		Access: &v2.LocalBlob{
+			Type:          runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
+			ReferenceName: "opendefensecloud/arc-apiserver:v0.2.0",
+		},
+	}
+	ref, ok, err := ResourceOCIReference(res, "127.0.0.1:5000/my-components")
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, "127.0.0.1:5000/my-components/opendefensecloud/arc-apiserver:v0.2.0@sha256:"+testDigest, ref)
 }
 
 // TestLocalBlobv2OCIReference ensures that LocalBlobv2OCIReference returns
