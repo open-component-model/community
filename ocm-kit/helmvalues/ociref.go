@@ -176,9 +176,12 @@ func LocalBlobv2OCIReference(res descriptor.Resource, repoBaseURL string, compon
 func ResourceOCIReference(res descriptor.Resource, repoBaseURL string) (ref string, ok bool, err error) {
 	switch a := res.Access.(type) {
 	case *ociaccessv1.OCIImage:
-		ref, ok, err = a.ImageReference, true, nil
+		ref, ok = a.ImageReference, true
 	case *v2.LocalBlob:
 		ref, ok, err = localBlobReference(a, repoBaseURL)
+		if err != nil {
+			return "", false, fmt.Errorf("determine local blob address for resource %s: %w", res.Name, err)
+		}
 	case *descriptor.LocalBlob:
 		// GlobalAccess is a runtime.Typed here; normalize it into the raw
 		// envelope form so a single LocalBlob code path handles both.
@@ -189,6 +192,9 @@ func ResourceOCIReference(res descriptor.Resource, repoBaseURL string) (ref stri
 			ReferenceName:  a.ReferenceName,
 			GlobalAccess:   typedToRaw(a.GlobalAccess),
 		}, repoBaseURL)
+		if err != nil {
+			return "", false, fmt.Errorf("determine local blob address for resource %s: %w", res.Name, err)
+		}
 	case *runtime.Raw:
 		if a == nil {
 			return "", false, nil
@@ -199,13 +205,16 @@ func ResourceOCIReference(res descriptor.Resource, repoBaseURL string) (ref stri
 			if err := json.Unmarshal(a.Data, &img); err != nil {
 				return "", false, fmt.Errorf("failed to decode OCIImage access: %w", err)
 			}
-			ref, ok, err = img.ImageReference, true, nil
+			ref, ok = img.ImageReference, true
 		case isLocalBlobTypeName(a.Name):
 			var lb v2.LocalBlob
 			if err := json.Unmarshal(a.Data, &lb); err != nil {
 				return "", false, fmt.Errorf("failed to decode LocalBlob access: %w", err)
 			}
 			ref, ok, err = localBlobReference(&lb, repoBaseURL)
+			if err != nil {
+				return "", false, fmt.Errorf("determine local blob address for resource %s: %w", res.Name, err)
+			}
 		default:
 			return "", false, nil
 		}
