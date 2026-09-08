@@ -1,0 +1,22 @@
+name: example.org/embedded-example
+version: 1.0.0
+provider:
+  name: Team
+resources:
+  - name: embedded-image
+    type: ociArtifact
+    version: 1.0.0
+    input:
+      type: file/v1
+      path: ./image.oci.tgz
+      mediaType: application/vnd.ocm.software.oci.layout.v1+tar
+  - name: helm-values-template
+    type: yaml
+    labels:
+      - name: "ext.ocm.software/helm.values-for"
+        value: helm-chart
+    relation: local
+    input:
+      type: File/v1
+      path: values.yaml.tpl
+      mediaType: application/x-yaml

@@ -32,7 +32,7 @@ components:
         relation: external
         access:
           type: ociArtifact
-          imageReference: ghcr.io/opendefensecloud/arc-controller-manager:v0.2.0
+          imageReference: ghcr.io/opendefensecloud/arc-controller-manager:v0.2.0@sha256:18cf724f10393f272f0650ffa4fb3e9a0057799748a34a04d840a35f1998d1ed
 
       # etcd Container Image
       - name: etcd-image
@@ -41,7 +41,7 @@ components:
         relation: external
         access:
           type: ociArtifact
-          imageReference: quay.io/coreos/etcd:v3.6.6
+          imageReference: quay.io/coreos/etcd:v3.6.6@sha256:ea8a4698f22200bf0322fd8ed6e0b106a3107db649bd61f654e1a9fc14d9a17e
 
       - name: helm-values-template
         type: yaml
