@@ -118,7 +118,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: PRs should have at least one qualifying label
-        uses: docker://agilepathway/pull-request-label-checker:latest@sha256:ac5016b9e014531fc0af8d8c5765e92db9da7a1db4ec15650d7974ac768d3589
+        uses: docker://agilepathway/pull-request-label-checker:latest@sha256:5f13a219131e65297e505699aef299402030d103d6ccd7e0c49bd140e217a8c8
         with:
           any_of: kind/chore,kind/bugfix,kind/feature,kind/dependency,kind/refactor
           repo_token: ${{ secrets.GITHUB_TOKEN }}
