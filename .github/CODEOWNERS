@@ -1,5 +1,5 @@
-# Default: TSC reviews everything
-*                                 @open-component-model/tsc
+# Default: TSC and maintainers review everything
+*                                 @open-component-model/tsc @open-component-model/maintainers
 
 # Repo settings — admins only
 /.github/settings.yml             @open-component-model/admins
