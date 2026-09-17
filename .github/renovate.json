@@ -6,5 +6,12 @@
     ":semanticCommits",
     "helpers:pinGitHubActionDigests",
     "local>open-component-model/community//ocm-kit/renovate.json"
+  ],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["digest", "pinDigest"],
+      "extends": ["schedule:weekly"],
+      "groupName": "digest updates"
+    }
   ]
 }
