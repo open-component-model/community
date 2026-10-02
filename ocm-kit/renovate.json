@@ -19,7 +19,7 @@
       "groupName": "ocm-kit tooling"
     },
     {
-      "description": "Group the Go toolchain version (go directive and flake)",
+      "description": "Group the Go toolchain version (go directive)",
       "matchDatasources": ["golang-version"],
       "matchFileNames": ["ocm-kit/**"],
       "groupName": "ocm-kit go toolchain"
@@ -38,14 +38,6 @@
       "managerFilePatterns": ["/^ocm-kit/tools\\.lock$/"],
       "matchStrings": ["\\S+\\s+(?<depName>[^@\\s]+)@(?<currentValue>v\\S+)"],
       "datasourceTemplate": "go"
-    },
-    {
-      "customType": "regex",
-      "description": "Go toolchain version pinned in flake.nix",
-      "managerFilePatterns": ["/^ocm-kit/flake\\.nix$/"],
-      "matchStrings": ["goVersion = \"(?<currentValue>[0-9.]+)\""],
-      "depNameTemplate": "go",
-      "datasourceTemplate": "golang-version"
     }
   ]
 }

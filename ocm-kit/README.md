@@ -27,9 +27,10 @@ For a smoother development experience, a small `ocm-kit` CLI is also provided, w
 ## Installation & Building
 
 ### Prerequisites
-- Go 1.26 or later
-- Docker (for running e2e tests)
-- OCM v2 CLI (for e2e tests)
+- Go (the version in `go.mod`; newer Go toolchains fetch it automatically)
+- `make`
+- `shellcheck` (for `make lint`)
+- Docker (for running e2e tests; `make e2e` builds the OCM CLI itself)
 
 ### Build
 ```bash
