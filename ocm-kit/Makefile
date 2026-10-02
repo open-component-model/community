@@ -1,4 +1,6 @@
-# ocm-kit build tooling — self-contained, no external includes.
+# ocm-kit build tooling. Tool versions are pinned in .env.
+
+include .env
 
 SHELL := /usr/bin/env bash -o pipefail
 .SHELLFLAGS := -ec
@@ -17,14 +19,11 @@ GO ?= go
 DOCKER ?= docker
 SHELLCHECK ?= shellcheck
 
-# Tools installed from tools.lock into $(LOCALGOBIN).
-GOLANGCI_LINT ?= $(LOCALGOBIN)/golangci-lint
-OSV_SCANNER ?= $(LOCALGOBIN)/osv-scanner
-# The OCM CLI is pinned in tools.lock under its produced binary name, "cli",
-# so the tools.lock rule below builds it. Expose it as "ocm" via a copy.
-OCM ?= $(LOCALGOBIN)/ocm
-$(OCM): $(LOCALGOBIN)/cli
-	@cp -f $< $@
+# Tools installed into $(LOCALGOBIN) under a versioned name, so a version
+# bump in .env triggers a reinstall.
+GOLANGCI_LINT ?= $(LOCALGOBIN)/golangci-lint-$(GOLANGCI_LINT_VERSION)
+OSV_SCANNER ?= $(LOCALGOBIN)/osv-scanner-$(OSV_SCANNER_VERSION)
+OCM ?= $(LOCALGOBIN)/ocm-$(OCM_CLI_VERSION)
 
 
 ##@ General
@@ -91,16 +90,18 @@ e2e-stop-zot: ## Stop and remove the zot registry container
 	$(DOCKER) rm -f zot-registry
 	$(DOCKER) volume rm zot-data
 
-# tools.lock maps "<bin-name> <module>@<version>" per line. This pattern rule
-# installs any tool by its binary name, e.g. $(LOCALGOBIN)/golangci-lint.
-TOOL_LOCK := $(BUILD_PATH)/tools.lock
-$(LOCALGOBIN)/%: $(LOCALGOBIN) $(TOOL_LOCK)
-	@toolname=$(notdir $@); \
-	module=$$(awk "/^$$toolname / {print \$$2}" $(TOOL_LOCK)); \
-	test -n "$$module" || { echo "error: $$toolname not found in $(TOOL_LOCK)"; exit 1; }; \
-	version=$${module##*@}; \
-	{ test -s $@ && grep -q "$$version" $(LOCALGOBIN)/.$$toolname-version 2>/dev/null; } || { \
-		echo "Installing $$toolname $$version..."; \
-		GOBIN=$(LOCALGOBIN) $(GO) install "$$module" && echo "$$version" > $(LOCALGOBIN)/.$$toolname-version; \
-	}
+# go-install installs Go package $(2) at version $(3) as binary $(1).
+define go-install
+@echo "Installing $(notdir $(2)) $(3)..."
+@GOBIN=$(LOCALGOBIN) $(GO) install $(2)@$(3)
+@mv -f $(LOCALGOBIN)/$(notdir $(2)) $(1)
+endef
 
+$(GOLANGCI_LINT): | $(LOCALGOBIN)
+	$(call go-install,$@,github.com/golangci/golangci-lint/v2/cmd/golangci-lint,$(GOLANGCI_LINT_VERSION))
+
+$(OSV_SCANNER): | $(LOCALGOBIN)
+	$(call go-install,$@,github.com/google/osv-scanner/v2/cmd/osv-scanner,$(OSV_SCANNER_VERSION))
+
+$(OCM): | $(LOCALGOBIN)
+	$(call go-install,$@,ocm.software/open-component-model/cli,$(OCM_CLI_VERSION))

@@ -14,8 +14,8 @@
       "groupName": "ocm-kit go modules"
     },
     {
-      "description": "Group the ocm-kit developer tooling pinned in tools.lock",
-      "matchFileNames": ["ocm-kit/tools.lock"],
+      "description": "Group the ocm-kit developer tooling pinned in .env",
+      "matchFileNames": ["ocm-kit/.env"],
       "groupName": "ocm-kit tooling"
     },
     {
@@ -34,10 +34,10 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Tool versions pinned in tools.lock",
-      "managerFilePatterns": ["/^ocm-kit/tools\\.lock$/"],
-      "matchStrings": ["\\S+\\s+(?<depName>[^@\\s]+)@(?<currentValue>v\\S+)"],
-      "datasourceTemplate": "go"
+      "description": "Tool versions pinned in .env",
+      "managerFilePatterns": ["/^ocm-kit/\\.env$/"],
+      "matchStrings": ["# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+.*?_VERSION=v?(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "versioningTemplate": "semver"
     }
   ]
 }
