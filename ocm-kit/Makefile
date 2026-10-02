@@ -14,7 +14,7 @@ LOCALGOBIN := $(LOCALBIN)/go
 $(LOCALGOBIN):
 	@mkdir -p $(LOCALGOBIN)
 
-# Toolchain from the dev shell / PATH (overridable).
+# Toolchain from PATH (overridable).
 GO ?= go
 DOCKER ?= docker
 SHELLCHECK ?= shellcheck
