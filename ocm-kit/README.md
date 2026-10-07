@@ -28,20 +28,20 @@ For a smoother development experience, a small `ocm-kit` CLI is also provided, w
 
 ### Prerequisites
 - Go (the version in `go.mod`; newer Go toolchains fetch it automatically)
-- `make`
-- `shellcheck` (for `make lint`)
-- Docker (for running e2e tests; `make e2e` builds the OCM CLI itself)
+- [Task](https://taskfile.dev/installation/) (run `task --list` for all tasks)
+- `shellcheck` (for `task lint`)
+- Docker (for running e2e tests; `task e2e` builds the OCM CLI itself)
 
 ### Build
 ```bash
-go build ./...
+task build
 ```
 
 ### Run Go tests
 
 ```bash
 # Run all tests
-make test
+task test
 # Run particular tests
 go test ./helmvalues
 ```
@@ -49,16 +49,16 @@ go test ./helmvalues
 ### Run e2e Tests
 ```bash
 # Run e2e tests with default version (timestamp-based)
-make e2e
+task e2e
 
 # Run e2e tests with a stable component version
-VERSION=0.1.0 make e2e
+task e2e -- --version 0.1.0
 
 # Run e2e tests but keep zot registry running
-make e2e-keep-zot
+task e2e -- --keep-zot
 
 # Stop and remove zot registry
-make e2e-stop-zot
+task e2e/stop-zot
 ```
 
 ## Releases

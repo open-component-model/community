@@ -8,7 +8,7 @@ SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 DOCKER="${DOCKER:-docker}"
 # OCM must point at the OCM CLI (module ocm.software/open-component-model/cli).
-# The Makefile builds it into bin/ocm.
+# `task e2e` builds it into tmp/bin.
 OCM="${OCM:-ocm}"
 GO="${GO:-go}"
 
