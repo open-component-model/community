@@ -29,10 +29,14 @@ jobs:
         with:
           go-version-file: ocm-kit/go.mod
           cache-dependency-path: ocm-kit/go.sum
+      - uses: arduino/setup-task@c0bc642852239c2689f73f4ea6459c29405f3c52 # v3.0.0
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
-        run: go build ./...
+        run: task build
       - name: Test
-        run: go test ./...
+        run: task test
       - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
           working-directory: ocm-kit
