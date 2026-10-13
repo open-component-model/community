@@ -1,0 +1,29 @@
+{
+    "responsibles": [
+        [
+            {
+                "source": "github",
+                "type": "githubUser",
+                "username": "johndoe",
+                "github_hostname": "github.com",
+                "email": "john.doe@example.com",
+                "first_name": "John",
+                "last_name": "Doe",
+                "origin_type": "codeowners"
+            }
+        ],
+        [
+            {
+                "source": "github",
+                "type": "githubUser",
+                "username": "janedoe",
+                "github_hostname": "github.com",
+                "email": "jane.doe@example.com",
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "origin_type": "codeowners"
+            }
+        ]
+    ],
+    "statuses": []
+}
