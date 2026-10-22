@@ -530,6 +530,52 @@ func TestGetRenderingInput_NativeOCIAccess(t *testing.T) {
 	}
 }
 
+// TestGetRenderingInput_CTFPlaceholderHost verifies that with the CTF
+// placeholder as base URL, component-local images get the placeholder host
+// while absolute image references stay unchanged.
+func TestGetRenderingInput_CTFPlaceholderHost(t *testing.T) {
+	absRes := descriptor.Resource{
+		ElementMeta: descriptor.ElementMeta{ObjectMeta: descriptor.ObjectMeta{Name: "abs"}},
+		Access:      &ociaccessv1.OCIImage{ImageReference: "ghcr.io/acme/app:v1"},
+	}
+	refNameRes := descriptor.Resource{
+		ElementMeta: descriptor.ElementMeta{ObjectMeta: descriptor.ObjectMeta{Name: "refname"}},
+		Digest:      getTestDigestDescriptor(),
+		Access: &v2.LocalBlob{
+			Type:          runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
+			ReferenceName: "opendefensecloud/arc-apiserver:v0.2.0",
+		},
+	}
+	embeddedRes := descriptor.Resource{
+		ElementMeta: descriptor.ElementMeta{ObjectMeta: descriptor.ObjectMeta{Name: "embedded", Version: "1.0.1"}},
+		Type:        "ociImage",
+		Access: &v2.LocalBlob{
+			Type:           runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
+			LocalReference: "sha256:" + testDigest,
+			MediaType:      OCIImageMediaType,
+		},
+	}
+	desc := mkDescriptor("acme.org/app", "1.0.0", absRes, refNameRes, embeddedRes)
+
+	input, err := GetRenderingInput(desc, CTFPlaceholderHost)
+	require.NoError(t, err)
+	require.Equal(t, map[string]ImageReference{
+		"abs": {Host: "ghcr.io", Repository: "acme/app", Tag: "v1"},
+		"refname": {
+			Host:       "REGISTRY",
+			Repository: "opendefensecloud/arc-apiserver",
+			Tag:        "v0.2.0",
+			Digest:     "sha256:" + testDigest,
+		},
+		"embedded": {
+			Host:       "REGISTRY",
+			Repository: "component-descriptors/acme.org/app",
+			Tag:        "1.0.1",
+			Digest:     "sha256:" + testDigest,
+		},
+	}, input.OCIResources)
+}
+
 // Regression test for https://github.com/open-component-model/community/issues/36
 func TestNewAuthClient_WithHelmCredentialsInConfig(t *testing.T) {
 	configPath := filepath.Join(t.TempDir(), "ocmconfig")
