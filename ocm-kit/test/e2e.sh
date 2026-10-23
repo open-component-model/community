@@ -140,6 +140,40 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# Tests 7 & 8: render straight from the local CTF, no registry involved.
+# The arc CTF holds only absolute ociArtifact accesses, so the upstream image
+# references render unchanged.
+# ---------------------------------------------------------------------------
+
+# Test 7: Render from the CTF with a ctf:: reference
+echo "Test 7: Rendering from the local CTF (ctf:: reference)..."
+OUTPUT7=$(${GO} run cmd/ocm-kit/main.go "ctf::${CTF_DIR}//${COMPONENT}:${VERSION}" -r helm-chart)
+if echo "$OUTPUT7" | grep -Fq "ghcr.io/opendefensecloud/arc-apiserver" && \
+   echo "$OUTPUT7" | grep -Fq "ghcr.io/opendefensecloud/arc-controller-manager" && \
+   echo "$OUTPUT7" | grep -Fq "quay.io/coreos/etcd"; then
+	echo "✓ Test 7 passed: Template rendered from ctf:: reference"
+else
+	echo "✗ Test 7 failed: ctf:: reference output missing expected content"
+	echo "Output was:"
+	echo "$OUTPUT7"
+	exit 1
+fi
+
+# Test 8: Render from the bare CTF path, which holds exactly one component version
+echo "Test 8: Rendering from the bare local CTF path..."
+OUTPUT8=$(${GO} run cmd/ocm-kit/main.go "${CTF_DIR}" -r helm-chart)
+if echo "$OUTPUT8" | grep -Fq "ghcr.io/opendefensecloud/arc-apiserver" && \
+   echo "$OUTPUT8" | grep -Fq "ghcr.io/opendefensecloud/arc-controller-manager" && \
+   echo "$OUTPUT8" | grep -Fq "quay.io/coreos/etcd"; then
+	echo "✓ Test 8 passed: Template rendered from bare CTF path"
+else
+	echo "✗ Test 8 failed: bare CTF path output missing expected content"
+	echo "Output was:"
+	echo "$OUTPUT8"
+	exit 1
+fi
+
+# ---------------------------------------------------------------------------
 # Tests 3 & 4: relative / local access.
 #
 # `--upload-as localBlob` copies resources into the target registry as
@@ -251,6 +285,19 @@ else
 	echo "✗ Test 6 failed: no component-descriptor based OCI reference was returned"
 	echo "Output was:"
 	echo "$OUTPUT6"
+	exit 1
+fi
+
+# Test 9: Render the embedded OCI image straight from the CTF. A CTF has no
+# registry host, so the component-local image gets the placeholder host.
+echo "Test 9: Rendering embedded OCI image from the local CTF..."
+OUTPUT9=$(${GO} run cmd/ocm-kit/main.go "ctf::${TEMP_CTF}//${EMBEDDED_CV_NAME}:${EMBEDDED_CV_VERSION}" -r helm-chart)
+if echo "$OUTPUT9" | grep -Eq "REGISTRY/component-descriptors/${EMBEDDED_CV_NAME}:${EMBEDDED_CV_VERSION}@sha256:[0-9a-f]{64}"; then
+	echo "✓ Test 9 passed: placeholder-host reference ($OUTPUT9) was returned"
+else
+	echo "✗ Test 9 failed: no placeholder-host reference was returned"
+	echo "Output was:"
+	echo "$OUTPUT9"
 	exit 1
 fi
 
