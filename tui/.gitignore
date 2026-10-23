@@ -1,0 +1,6 @@
+# Binary from `go build -o ocm-tui ./cmd`.
+/ocm-tui
+# Debug log of builds that wrote it into the working directory.
+tui-debug.log
+# Resources downloaded from the explorer are named after their identity.
+name=*

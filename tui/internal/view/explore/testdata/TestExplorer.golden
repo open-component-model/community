@@ -1,0 +1,20 @@
+ OCM  tui                                                           ghcr.io/acme//acme.org/app:1.0.0
+────────────────────────────────────────────────────────────────────────────────────────────────────
+▾ acme.org/app                                    │ Name:       acme.org/app                        
+  ▾ 1.0.0                                         │ Version:    1.0.0                               
+    ▸ Resources (1)                               │                                                 
+    ▸ References (1)                              │ Resources:  1                                   
+                                                  │ Sources:    0                                   
+                                                  │ References: 1                                   
+                                                  │ Signatures: 0                                   
+                                                  │                                                 
+                                                  │                                                 
+                                                  │                                                 
+                                                  │                                                 
+                                                  │                                                 
+                                                  │                                                 
+                                                  │                                                 
+                                                  │                                                 
+                                                  │                                                 
+                                                  │                                                 
+↑/k up • ↓/j down • enter expand • h collapse • tab details • t transfer • esc back • : commands    
