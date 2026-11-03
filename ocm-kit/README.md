@@ -28,20 +28,20 @@ For a smoother development experience, a small `ocm-kit` CLI is also provided, w
 
 ### Prerequisites
 - Go (the version in `go.mod`; newer Go toolchains fetch it automatically)
-- `make`
-- `shellcheck` (for `make lint`)
-- Docker (for running e2e tests; `make e2e` builds the OCM CLI itself)
+- [Task](https://taskfile.dev/installation/) (run `task --list` for all tasks)
+- `shellcheck` (for `task lint`)
+- Docker (for running e2e tests; `task e2e` builds the OCM CLI itself)
 
 ### Build
 ```bash
-go build ./...
+task build
 ```
 
 ### Run Go tests
 
 ```bash
 # Run all tests
-make test
+task test
 # Run particular tests
 go test ./helmvalues
 ```
@@ -49,16 +49,16 @@ go test ./helmvalues
 ### Run e2e Tests
 ```bash
 # Run e2e tests with default version (timestamp-based)
-make e2e
+task e2e
 
 # Run e2e tests with a stable component version
-VERSION=0.1.0 make e2e
+task e2e -- --version 0.1.0
 
 # Run e2e tests but keep zot registry running
-make e2e-keep-zot
+task e2e -- --keep-zot
 
 # Stop and remove zot registry
-make e2e-stop-zot
+task e2e/stop-zot
 ```
 
 ## Releases
@@ -105,7 +105,8 @@ The `ocm-kit` command-line tool renders Helm values templates from OCM component
 ocm-kit <component-version-ref> [flags]
 ```
 
-Where `<component-version-ref>` is in the format: `protocol://host/namespace//component:version`
+Where `<component-version-ref>` is in the format: `protocol://host/namespace//component:version`,
+or `ctf::<path>//component:version` for a local CTF (see [Rendering from a local CTF](#rendering-from-a-local-ctf)).
 
 Examples:
 ```bash
@@ -119,6 +120,32 @@ ocm-kit "https://registry.example.com/stable//example.com/myapp:1.2.3" -r my-cha
 ocm-kit "http://localhost:5000/my-components//opendefense.cloud/arc:0.1.0" \
   --local-helm-values-template ./values.yaml.tpl
 ```
+
+### Rendering from a local CTF
+
+`ocm-kit` renders straight from a local CTF, so a template can be checked right
+after `ocm add component-version`, without transferring the component into a
+registry first:
+
+```bash
+# Explicit component version; the ctf:: prefix is required for this form
+ocm-kit "ctf::./ctf-example-app.tgz//opendefense.cloud/arc:0.1.0" -r helm-chart
+
+# Bare path (or ctf::<path>): works when the CTF holds exactly one component version
+ocm-kit ./ctf-example-app.tgz
+```
+
+- Supported formats: CTF directory, `.tar`, `.tgz` and `.tar.gz`.
+- The CTF is opened read-only; archives are extracted into a temporary directory
+  that is removed afterwards.
+- With the bare path, a CTF holding zero or several component versions fails and
+  lists the contained `<name>:<version>` entries.
+- Absolute image references (`ociArtifact` access) render unchanged. A CTF has no
+  registry host, so component-local images render with the placeholder host
+  `REGISTRY` (for example `REGISTRY/component-descriptors/<component>:<version>@<digest>`).
+  The placeholder is not a valid registry host on purpose: values rendered from a
+  CTF are for checking the template, not for deploying.
+- `-r`, `-f` and `-p` work exactly as for registry references.
 
 ### Command Flags
 
@@ -345,6 +372,10 @@ func main() {
     fmt.Println(renderedValues)
 }
 ```
+
+To read from a local CTF instead, open it with `helmvalues.OpenCTF(ctx, path)`;
+`ComponentVersions` lists what it holds, and `helmvalues.CTFPlaceholderHost` is
+the base URL to pass to `GetRenderingInput`, since a CTF has no registry host.
 
 ## Template Variables
 

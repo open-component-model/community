@@ -1,0 +1,104 @@
+# https://taskfile.dev
+version: '3'
+
+# Tool versions are pinned in .env.
+dotenv: ['.env']
+
+vars:
+  BIN: '{{ .TASKFILE_DIR }}/tmp/bin'
+  # Tools are installed under a versioned name, so a version bump in .env
+  # triggers a reinstall.
+  GOLANGCI_LINT: '{{ .BIN }}/golangci-lint-{{ .GOLANGCI_LINT_VERSION }}'
+  OSV_SCANNER: '{{ .BIN }}/osv-scanner-{{ .OSV_SCANNER_VERSION }}'
+  OCM: '{{ .BIN }}/ocm-{{ .OCM_CLI_VERSION }}'
+
+tasks:
+  build:
+    desc: Build the ocm-kit binary into tmp/bin
+    cmd: go build -o {{ .BIN }}/ocm-kit ./cmd/ocm-kit
+
+  fmt:
+    desc: Format code
+    deps: [tools/golangci-lint]
+    cmds:
+      - go fmt ./...
+      - '{{ .GOLANGCI_LINT }} run --fix'
+
+  mod:
+    desc: Tidy, download and verify modules
+    cmds:
+      - go mod tidy
+      - go mod download
+      - go mod verify
+
+  test:
+    desc: Run unit tests with coverage
+    cmd: go test -coverprofile=ocm-kit.coverprofile ./...
+
+  lint:
+    desc: Run all linters
+    cmds:
+      - task: golangci-lint
+      - task: shellcheck
+
+  golangci-lint:
+    desc: Run golangci-lint
+    deps: [tools/golangci-lint]
+    cmd: '{{ .GOLANGCI_LINT }} run'
+
+  shellcheck:
+    desc: Run shellcheck on tracked shell scripts
+    cmd: shellcheck $(git ls-files '*.sh')
+
+  scan:
+    desc: Scan dependencies for known vulnerabilities
+    deps: [tools/osv-scanner]
+    cmd: '{{ .OSV_SCANNER }} scan source -r .'
+
+  e2e:
+    desc: 'Run e2e tests, script flags go after "--" (e.g. task e2e -- --keep-zot --version 0.1.0)'
+    deps: [tools/ocm]
+    env:
+      OCM: '{{ .OCM }}'
+    cmd: ./test/e2e.sh {{ .CLI_ARGS }}
+
+  e2e/stop-zot:
+    desc: Stop and remove the zot registry container
+    cmds:
+      - ${DOCKER:-docker} stop zot-registry
+      - ${DOCKER:-docker} rm -f zot-registry
+      - ${DOCKER:-docker} volume rm zot-data
+
+  clean:
+    desc: Remove tmp/ (built binary and tools)
+    cmd: rm -rf {{ .TASKFILE_DIR }}/tmp
+
+  tools/golangci-lint:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: { PKG: github.com/golangci/golangci-lint/v2/cmd/golangci-lint, VERSION: '{{ .GOLANGCI_LINT_VERSION }}', OUT: '{{ .GOLANGCI_LINT }}' }
+
+  tools/osv-scanner:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: { PKG: github.com/google/osv-scanner/v2/cmd/osv-scanner, VERSION: '{{ .OSV_SCANNER_VERSION }}', OUT: '{{ .OSV_SCANNER }}' }
+
+  tools/ocm:
+    internal: true
+    cmds:
+      - task: go-install
+        vars: { PKG: ocm.software/open-component-model/cli, VERSION: '{{ .OCM_CLI_VERSION }}', OUT: '{{ .OCM }}' }
+
+  # Installs Go package PKG at VERSION as the binary OUT.
+  go-install:
+    internal: true
+    label: 'go-install {{ base .PKG }}@{{ .VERSION }}'
+    status:
+      - test -x {{ .OUT }}
+    env:
+      GOBIN: '{{ .BIN }}'
+    cmds:
+      - go install {{ .PKG }}@{{ .VERSION }}
+      - mv -f {{ .BIN }}/{{ base .PKG }} {{ .OUT }}

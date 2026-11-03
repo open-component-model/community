@@ -403,6 +403,23 @@ func TestLocalBlobv2OCIReference(t *testing.T) {
 			},
 			CheckResults: noErrorInvalidType,
 		},
+		{
+			Name: "v2.LocalBlob with helmChart type",
+			Resource: descriptor.Resource{
+				Access: &v2.LocalBlob{
+					Type:           runtime.NewVersionedType(v2.LocalBlobAccessType, v2.LocalBlobAccessTypeVersion),
+					LocalReference: "sha256:83f4282d88d92266a8517330477ac6cc8e1cf7724d569087bab5367df3b083d6",
+					MediaType:      OCIImageMediaType,
+				},
+				Type: "helmChart",
+				ElementMeta: descriptor.ElementMeta{
+					ObjectMeta: descriptor.ObjectMeta{
+						Version: "7",
+					},
+				},
+			},
+			CheckResults: successfulCall,
+		},
 	}
 
 	for _, tt := range tests {

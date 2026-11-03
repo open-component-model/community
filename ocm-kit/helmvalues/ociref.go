@@ -143,7 +143,7 @@ func LocalBlobv2OCIReference(res descriptor.Resource, repoBaseURL string, compon
 		}
 	}
 
-	if (lb != nil) && (res.Type == "ociArtifact" || res.Type == "ociImage") && (lb.MediaType == OCIImageMediaType) {
+	if (lb != nil) && (res.Type == "ociArtifact" || res.Type == "ociImage" || res.Type == "helmChart") && (lb.MediaType == OCIImageMediaType) {
 		ref, err := joinRef(repoBaseURL, "component-descriptors", componentName)
 		if err != nil {
 			return "", false, fmt.Errorf("join reference: %w", err)
