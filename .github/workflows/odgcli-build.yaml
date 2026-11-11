@@ -1,0 +1,39 @@
+name: odgcli build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "odgcli/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "odgcli/**"
+
+defaults:
+  run:
+    working-directory: odgcli
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: odgcli/go.mod
+          cache-dependency-path: odgcli/go.sum
+
+      - name: Install Task
+        uses: go-task/setup-task@v1
+
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          install-only: true
+
+      - name: Build
+        run: task build
