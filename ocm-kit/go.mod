@@ -7,7 +7,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
-	ocm.software/open-component-model/bindings/go v0.23.0
+	ocm.software/open-component-model/bindings/go v0.24.0
 	oras.land/oras-go/v2 v2.7.0
 	sigs.k8s.io/yaml v1.6.0
 )
