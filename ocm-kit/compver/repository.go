@@ -1,4 +1,4 @@
-package helmvalues
+package compver
 
 import (
 	"archive/tar"
@@ -23,13 +23,11 @@ import (
 	urlresolver "ocm.software/open-component-model/bindings/go/oci/resolver/url"
 )
 
-// CTFPlaceholderHost is the base URL callers pass to GetRenderingInput for a
-// component version read from a CTF. A CTF has no registry host, so
-// component-local images render with this placeholder, which is deliberately
-// not a valid registry host.
+// CTFPlaceholderHost is the base URL used for component-local images from
+// a CTF, which has no registry host.
 const CTFPlaceholderHost = "REGISTRY"
 
-// Repository is the narrow surface helmvalues needs from an OCM repository.
+// Repository provides component descriptors and local resource content.
 // It is public so consumers and tests can supply their own.
 type Repository interface {
 	// GetComponentVersion resolves a component descriptor.

@@ -1,10 +1,9 @@
-package helmvalues
+package compver
 
 import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -20,26 +19,6 @@ import (
 	"ocm.software/open-component-model/bindings/go/oci"
 	ocictf "ocm.software/open-component-model/bindings/go/oci/ctf"
 )
-
-func TestFakeRepository_Implements(t *testing.T) {
-	var _ Repository = (*FakeRepository)(nil)
-
-	f := &FakeRepository{
-		Descriptor: &descriptor.Descriptor{
-			Component: descriptor.Component{
-				ComponentMeta: descriptor.ComponentMeta{ObjectMeta: descriptor.ObjectMeta{Name: "c", Version: "1.0.0"}},
-			},
-		},
-		Blobs: map[string][]byte{"greeting": []byte("hi")},
-	}
-	desc, err := f.GetComponentVersion(context.Background(), "c", "1.0.0")
-	require.NoError(t, err)
-	require.Equal(t, "c", desc.Component.Name)
-
-	data, err := f.ResourceBytes(context.Background(), "c", "1.0.0", "greeting")
-	require.NoError(t, err)
-	require.Equal(t, []byte("hi"), data)
-}
 
 // testResourceName names the template resource writeTestCTF adds to every
 // component version.
@@ -205,4 +184,24 @@ func TestOpenRepository_CreatesAndRemovesTempDir(t *testing.T) {
 
 	require.NoError(t, repo.Close())
 	require.NoDirExists(t, repo.tempDir)
+}
+
+func TestFakeRepository_Implements(t *testing.T) {
+	var _ Repository = (*FakeRepository)(nil)
+
+	f := &FakeRepository{
+		Descriptor: &descriptor.Descriptor{
+			Component: descriptor.Component{
+				ComponentMeta: descriptor.ComponentMeta{ObjectMeta: descriptor.ObjectMeta{Name: "c", Version: "1.0.0"}},
+			},
+		},
+		Blobs: map[string][]byte{"greeting": []byte("hi")},
+	}
+	desc, err := f.GetComponentVersion(t.Context(), "c", "1.0.0")
+	require.NoError(t, err)
+	require.Equal(t, "c", desc.Component.Name)
+
+	data, err := f.ResourceBytes(t.Context(), "c", "1.0.0", "greeting")
+	require.NoError(t, err)
+	require.Equal(t, []byte("hi"), data)
 }
