@@ -1,5 +1,7 @@
 name: ocm-kit
 on:
+  # Called by ocm-kit-tag.yaml to check the commit before it is tagged.
+  workflow_call:
   pull_request:
     paths:
       - 'ocm-kit/**'
@@ -20,6 +22,8 @@ jobs:
         working-directory: ocm-kit
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       # Same golangci-lint version as local development (pinned in .env).
       # Go itself comes from go.mod.
       - id: versions

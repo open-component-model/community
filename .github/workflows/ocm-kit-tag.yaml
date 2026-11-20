@@ -1,4 +1,5 @@
-# Creates an ocm-kit release tag (ocm-kit/vX.Y.Z) on the current main commit.
+# Creates an ocm-kit release tag (ocm-kit/vX.Y.Z) on the main commit the run
+# was started from, after the ocm-kit build, tests and lint pass on it.
 # The tag push starts "ocm-kit release" (ocm-kit-release.yaml).
 #
 # Only the release bot (ocm-bot-release) may create tags in this organization;
@@ -22,13 +23,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  tag:
-    name: Create release tag
+  # Tags are immutable and the Go module proxy caches them, so a wrong tag
+  # is permanent: accept only vX.Y.Z from main. The module path has no /vN
+  # suffix, so only v0 and v1 are valid Go versions for it; moving to v2
+  # means changing the module path first.
+  check-inputs:
+    name: Check inputs
     runs-on: ubuntu-latest
-    environment: ocm-kit-release
     steps:
-      # Tags are immutable and the Go module proxy caches them, so a wrong tag
-      # is permanent: accept only vX.Y.Z from main.
       - name: Check inputs
         env:
           VERSION: ${{ inputs.version }}
@@ -38,11 +40,28 @@ jobs:
             echo "::error::run this workflow from main, not $GITHUB_REF"
             exit 1
           fi
-          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::version must look like v1.2.3, got: $VERSION"
+          if [[ ! "$VERSION" =~ ^v[01]\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must look like v1.2.3 with major version 0 or 1, got: $VERSION"
             exit 1
           fi
 
+  # Build, test and lint the commit that will be tagged. This runs before the
+  # approval is requested, so approvers only see runs that passed.
+  ci:
+    name: CI
+    needs: check-inputs
+    permissions:
+      contents: read
+    # The $/ self-repository syntax is not used yet because actionlint
+    # (v1.7.12) rejects it.
+    uses: ./.github/workflows/ocm-kit.yaml # zizmor: ignore[self-repository]
+
+  tag:
+    name: Create release tag
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: ocm-kit-release
+    steps:
       # A tag pushed with GITHUB_TOKEN would not start ocm-kit-release.yaml,
       # and only the release bot may create tags.
       - name: Generate app token
