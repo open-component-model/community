@@ -1,0 +1,72 @@
+# Creates an ocm-kit release tag (ocm-kit/vX.Y.Z) on the current main commit.
+# The tag push starts "ocm-kit release" (ocm-kit-release.yaml).
+#
+# Only the release bot (ocm-bot-release) may create tags in this organization;
+# people can no longer push tags. The job runs in the "ocm-kit-release"
+# environment, which holds the bot's credentials, is limited to main and needs
+# an approval, so every release tag is reviewed before the bot creates it.
+name: ocm-kit tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: ocm-kit version without prefix, for example v0.5.0
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: ocm-kit-tag
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    name: Create release tag
+    runs-on: ubuntu-latest
+    environment: ocm-kit-release
+    steps:
+      # Tags are immutable and the Go module proxy caches them, so a wrong tag
+      # is permanent: accept only vX.Y.Z from main.
+      - name: Check inputs
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != refs/heads/main ]]; then
+            echo "::error::run this workflow from main, not $GITHUB_REF"
+            exit 1
+          fi
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must look like v1.2.3, got: $VERSION"
+            exit 1
+          fi
+
+      # A tag pushed with GITHUB_TOKEN would not start ocm-kit-release.yaml,
+      # and only the release bot may create tags.
+      - name: Generate app token
+        id: get_token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ secrets.RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          token: ${{ steps.get_token.outputs.token }}
+          # Kept so that `git push` below authenticates with the app token.
+          # This job uploads no artifacts, so the token cannot leak that way.
+          persist-credentials: true # zizmor: ignore[artipacked]
+
+      - name: Create and push tag
+        env:
+          TAG: ocm-kit/${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          git tag "$TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG"
