@@ -1,0 +1,35 @@
+name: tui
+on:
+  pull_request:
+    paths:
+      - 'tui/**'
+      - '.github/workflows/tui.yaml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'tui/**'
+      - '.github/workflows/tui.yaml'
+permissions:
+  contents: read
+jobs:
+  build-test:
+    name: Build, test & lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tui
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: tui/go.mod
+          cache-dependency-path: tui/go.sum
+      - name: Build
+        run: go build ./...
+      # Includes ./integration, which starts an OCI registry in Docker.
+      - name: Test
+        run: go test -race ./...
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          working-directory: tui
+          version: v2.14.0

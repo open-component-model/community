@@ -1,0 +1,24 @@
+ OCM  tui                                                                          transfer: options
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+                                                                                                    
+                      Step 3/4: Options                                                             
+                                                                                                    
+                      │ [ ] Recursive                                                               
+                      │ also transfer referenced component versions                                 
+                                                                                                    
+                        [ ] Copy all resources                                                      
+                        copy external resources by value, not only local blobs                      
+                                                                                                    
+                        Upload as localBlob                                                         
+                        store copied resources as local blobs or OCI artifacts                      
+                                                                                                    
+                        Build transformation graph →                                                
+                        review the plan before anything is transferred                              
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+↑/k up • ↓/j down • enter select • esc back • : commands                                            
