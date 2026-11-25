@@ -63,7 +63,13 @@ task e2e/stop-zot
 
 ## Releases
 
-Tagging `ocm-kit/vX.Y.Z` publishes a GitHub Release with cross-compiled binaries
+To release, run the **ocm-kit tag** workflow (`.github/workflows/ocm-kit-tag.yaml`)
+from `main` with the version, for example `v0.5.0`. It builds, tests and lints
+the commit, then waits for an approval in the `ocm-kit-release` environment.
+After the approval, the release bot creates the tag `ocm-kit/vX.Y.Z`. People
+cannot push tags themselves.
+
+The tag `ocm-kit/vX.Y.Z` publishes a GitHub Release with cross-compiled binaries
 (linux/darwin/windows, amd64/arm64) and a `SHA256SUMS` file, and pushes a
 multi-arch container image to `ghcr.io/open-component-model/community/ocm-kit`
 (tagged with the version — no `latest` tag is published):
