@@ -51,19 +51,11 @@ func ParseOCIRef(imageRef string) (ImageReference, error) {
 		return ImageReference{}, fmt.Errorf("invalid OCI reference %q: %w", imageRef, err)
 	}
 
-	// The embedded oras.Reference.Reference field holds the digest when the ref
-	// is digest-bearing, but it also mirrors the tag for tag-only references.
-	// Only surface it as a digest when it validates as one.
-	digest := ""
-	if lr.ValidateReferenceAsDigest() == nil {
-		digest = lr.Reference.Reference
-	}
-
 	return ImageReference{
 		Host:       lr.Registry,
 		Repository: lr.Repository,
 		Tag:        lr.Tag,
-		Digest:     digest,
+		Digest:     lr.Digest,
 	}, nil
 }
 
