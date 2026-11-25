@@ -1,4 +1,4 @@
-package helmvalues
+package compver
 
 import (
 	"context"
@@ -140,4 +140,28 @@ configurations:
 	require.NoError(t, err)
 	require.Equal(t, "exp-user", cred.Username)
 	require.Equal(t, "exp-pass", cred.Password)
+}
+
+const configWithHelmCredentials = `
+type: generic.config.ocm.software/v1
+configurations:
+  - type: credentials.config.ocm.software
+    consumers:
+      - identities:
+          - type: HelmChartRepository
+            hostname: example.org 
+        credentials:
+          - type: HelmHTTPCredentials/v1
+            username: anything
+            password: anything
+`
+
+// Regression test for https://github.com/open-component-model/community/issues/36
+func TestNewAuthClient_WithHelmCredentialsInConfig(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "ocmconfig")
+
+	require.NoError(t, os.WriteFile(configPath, []byte(configWithHelmCredentials), 0600))
+
+	_, err := NewAuthClient(t.Context(), configPath)
+	require.NoError(t, err)
 }

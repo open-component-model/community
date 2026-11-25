@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -15,21 +13,9 @@ import (
 	v2 "ocm.software/open-component-model/bindings/go/descriptor/v2"
 	ociaccessv1 "ocm.software/open-component-model/bindings/go/oci/spec/access/v1"
 	"ocm.software/open-component-model/bindings/go/runtime"
-)
 
-const configWithHelmCredentials = `
-type: generic.config.ocm.software/v1
-configurations:
-  - type: credentials.config.ocm.software
-    consumers:
-      - identities:
-          - type: HelmChartRepository
-            hostname: example.org 
-        credentials:
-          - type: HelmHTTPCredentials/v1
-            username: anything
-            password: anything
-`
+	"github.com/open-component-model/community/ocm-kit/compver"
+)
 
 // TestRender tests the Render function with various template scenarios
 func TestRender(t *testing.T) {
@@ -375,7 +361,7 @@ func TestGetFirstHelmValuesTemplate(t *testing.T) {
 	res.Version = "2.0.0"
 	desc := mkDescriptor("acme.org/app", "1.0.0", res)
 
-	repo := &FakeRepository{
+	repo := &compver.FakeRepository{
 		Descriptor: desc,
 		Blobs:      map[string][]byte{"values": []byte("replicas: 3")},
 	}
@@ -399,7 +385,7 @@ func TestGetFirstHelmValuesTemplate(t *testing.T) {
 // carries a helm-values label.
 func TestGetFirstHelmValuesTemplateNotFound(t *testing.T) {
 	desc := mkDescriptor("acme.org/app", "1.0.0", resWithLabel("plain"))
-	repo := &FakeRepository{Descriptor: desc, Blobs: map[string][]byte{}}
+	repo := &compver.FakeRepository{Descriptor: desc, Blobs: map[string][]byte{}}
 
 	_, err := GetFirstHelmValuesTemplate(context.Background(), repo, desc)
 	if !errors.Is(err, ErrNotFound) {
@@ -418,7 +404,7 @@ func TestGetHelmValuesTemplate(t *testing.T) {
 	)
 	desc := mkDescriptor("acme.org/app", "1.0.0", other, values)
 
-	repo := &FakeRepository{
+	repo := &compver.FakeRepository{
 		Descriptor: desc,
 		Blobs: map[string][]byte{
 			"values": []byte("for: mychart"),
@@ -557,7 +543,7 @@ func TestGetRenderingInput_CTFPlaceholderHost(t *testing.T) {
 	}
 	desc := mkDescriptor("acme.org/app", "1.0.0", absRes, refNameRes, embeddedRes)
 
-	input, err := GetRenderingInput(desc, CTFPlaceholderHost)
+	input, err := GetRenderingInput(desc, compver.CTFPlaceholderHost)
 	require.NoError(t, err)
 	require.Equal(t, map[string]ImageReference{
 		"abs": {Host: "ghcr.io", Repository: "acme/app", Tag: "v1"},
@@ -574,14 +560,4 @@ func TestGetRenderingInput_CTFPlaceholderHost(t *testing.T) {
 			Digest:     "sha256:" + testDigest,
 		},
 	}, input.OCIResources)
-}
-
-// Regression test for https://github.com/open-component-model/community/issues/36
-func TestNewAuthClient_WithHelmCredentialsInConfig(t *testing.T) {
-	configPath := filepath.Join(t.TempDir(), "ocmconfig")
-
-	require.NoError(t, os.WriteFile(configPath, []byte(configWithHelmCredentials), 0600))
-
-	_, err := NewAuthClient(t.Context(), configPath)
-	assert.NoError(t, err)
 }
