@@ -12,9 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"oras.land/oras-go/v2/registry/remote/auth"
-	"oras.land/oras-go/v2/registry/remote/retry"
-
+	"github.com/oras-project/oras-go/v3/registry/remote/auth"
+	"github.com/oras-project/oras-go/v3/registry/remote/retry"
 	"ocm.software/open-component-model/bindings/go/blob"
 	"ocm.software/open-component-model/bindings/go/ctf"
 	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
