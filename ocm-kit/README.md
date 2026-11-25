@@ -63,7 +63,13 @@ task e2e/stop-zot
 
 ## Releases
 
-Tagging `ocm-kit/vX.Y.Z` publishes a GitHub Release with cross-compiled binaries
+To release, run the **ocm-kit tag** workflow (`.github/workflows/ocm-kit-tag.yaml`)
+from `main` with the version, for example `v0.5.0`. It builds, tests and lints
+the commit, then waits for an approval in the `ocm-kit-release` environment.
+After the approval, the release bot creates the tag `ocm-kit/vX.Y.Z`. People
+cannot push tags themselves.
+
+The tag `ocm-kit/vX.Y.Z` publishes a GitHub Release with cross-compiled binaries
 (linux/darwin/windows, amd64/arm64) and a `SHA256SUMS` file, and pushes a
 multi-arch container image to `ghcr.io/open-component-model/community/ocm-kit`
 (tagged with the version — no `latest` tag is published):
@@ -319,47 +325,21 @@ import (
 func main() {
     ctx := context.Background()
 
-    // Parse a component version reference of the form
-    // protocol://host/namespace//component:version.
-    cvr, err := compver.SplitRef("http://localhost:5000/my-components//opendefense.cloud/arc:0.1.0")
+    // Open an OCI reference or local CTF using OCM and Docker credentials.
+    opened, err := compver.Open(ctx, "http://localhost:5000/my-components//opendefense.cloud/arc:0.1.0")
     if err != nil {
         log.Fatal(err)
     }
-
-    // Build a credential-aware client. Credentials resolve through the OCM
-    // credential graph: ~/.ocmconfig (consumers + DockerConfig repositories) and
-    // the implicit ~/.docker/config.json, with anonymous fallback. Pass "" to
-    // auto-discover the OCM config ($OCM_CONFIG, else ~/.ocmconfig).
-    client, err := helmvalues.NewAuthClient(ctx, "")
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    // Open the OCI-registry-backed OCM repository. The URL carries the scheme
-    // (http selects plain HTTP; https/oci select TLS). Close removes the
-    // repository's blob-staging directory.
-    baseURL := cvr.Host + "/" + cvr.Namespace
-    repo, err := helmvalues.OpenRepository(cvr.Protocol+"://"+baseURL, helmvalues.WithAuthClient(client))
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer repo.Close()
-
-    // Resolve the component descriptor.
-    desc, err := repo.GetComponentVersion(ctx, cvr.ComponentName, cvr.Version)
-    if err != nil {
-        log.Fatal(err)
-    }
+    defer opened.Close()
 
     // Find the helm values template for a specific chart and download it.
-    tmpl, err := helmvalues.GetHelmValuesTemplate(ctx, repo, desc, "helm-chart")
+    tmpl, err := helmvalues.GetHelmValuesTemplate(ctx, opened.Repository, opened.Descriptor, "helm-chart")
     if err != nil {
         log.Fatal(err)
     }
 
     // Build the rendering input (OCI resources, component metadata) and render.
-    // baseURL lets relative resource references be resolved to full image refs.
-    input, err := helmvalues.GetRenderingInput(desc, baseURL)
+    input, err := helmvalues.GetRenderingInput(opened.Descriptor, opened.BaseURL)
     if err != nil {
         log.Fatal(err)
     }
@@ -373,9 +353,9 @@ func main() {
 }
 ```
 
-To read from a local CTF instead, open it with `helmvalues.OpenCTF(ctx, path)`;
-`ComponentVersions` lists what it holds, and `helmvalues.CTFPlaceholderHost` is
-the base URL to pass to `GetRenderingInput`, since a CTF has no registry host.
+To read from a local CTF instead, pass its path or an explicit
+`ctf::<path>//<component>:<version>` reference to `compver.Open`. A CTF has no
+registry host, so `BaseURL` uses the `REGISTRY` placeholder.
 
 ## Template Variables
 

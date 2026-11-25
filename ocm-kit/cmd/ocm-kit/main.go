@@ -2,18 +2,14 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/spf13/cobra"
 
 	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
-	"ocm.software/open-component-model/bindings/go/oci/compref"
-	ctfv1 "ocm.software/open-component-model/bindings/go/oci/spec/repository/v1/ctf"
 
 	"github.com/open-component-model/community/ocm-kit/compver"
 	"github.com/open-component-model/community/ocm-kit/helmvalues"
@@ -38,40 +34,15 @@ A local CTF (directory, .tar, .tgz or .tar.gz) is read with ctf::<path>//<compon
 Component-local images from a CTF render with the placeholder host REGISTRY, because a CTF has no registry host.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			componentVersionRef := args[0]
-
 			ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			if strings.HasPrefix(componentVersionRef, ctfPrefix) || !strings.Contains(componentVersionRef, "//") {
-				return opts.renderCTF(ctx, componentVersionRef)
-			}
-
-			cvr, err := compver.SplitRef(componentVersionRef)
+			opened, err := compver.Open(ctx, args[0])
 			if err != nil {
-				return fmt.Errorf("failed to split component version reference: %w", err)
+				return err
 			}
-
-			client, err := helmvalues.NewAuthClient(ctx, "")
-			if err != nil {
-				return fmt.Errorf("failed to create auth client: %w", err)
-			}
-
-			baseURL := cvr.Host + "/" + cvr.Namespace
-			repoURL := cvr.Protocol + "://" + baseURL
-
-			repo, err := helmvalues.OpenRepository(repoURL, helmvalues.WithAuthClient(client))
-			if err != nil {
-				return fmt.Errorf("failed to open repository: %w", err)
-			}
-			defer func() { _ = repo.Close() }()
-
-			desc, err := repo.GetComponentVersion(ctx, cvr.ComponentName, cvr.Version)
-			if err != nil {
-				return fmt.Errorf("failed to get component version: %w", err)
-			}
-
-			return opts.render(ctx, repo, desc, baseURL)
+			defer func() { _ = opened.Close() }()
+			return opts.render(ctx, opened.Repository, opened.Descriptor, opened.BaseURL)
 		},
 	}
 
@@ -85,73 +56,15 @@ Component-local images from a CTF render with the placeholder host REGISTRY, bec
 	}
 }
 
-// ctfPrefix marks a component version reference into a local CTF.
-const ctfPrefix = "ctf::"
-
 type options struct {
 	chartResName            string
 	localHelmValuesTemplate string
 	pullSecretsFilePath     string
 }
 
-// renderCTF renders from a local CTF, given as ctf::<path>//<component>:<version>
-// or as a bare path ([ctf::]<path>) to a CTF holding exactly one component version.
-func (o *options) renderCTF(ctx context.Context, arg string) error {
-	path := strings.TrimPrefix(arg, ctfPrefix)
-	var cv helmvalues.ComponentVersion
-	if strings.Contains(arg, "//") {
-		ref, err := compref.Parse(arg)
-		if err != nil {
-			return err
-		}
-		// Reason: the lookup is by version only and would silently ignore the pin.
-		if ref.Digest != "" {
-			return errors.New("digest-pinned component references are not supported")
-		}
-		spec, ok := ref.Repository.(*ctfv1.Repository)
-		if !ok {
-			return fmt.Errorf("%q is not a CTF reference", arg)
-		}
-		path = spec.FilePath
-		cv = helmvalues.ComponentVersion{Name: ref.Component, Version: ref.Version}
-	}
-
-	repo, err := helmvalues.OpenCTF(ctx, path)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = repo.Close() }()
-
-	if cv.Name == "" {
-		cvs, err := repo.ComponentVersions(ctx)
-		if err != nil {
-			return err
-		}
-		switch len(cvs) {
-		case 0:
-			return fmt.Errorf("no component versions in CTF %q", path)
-		case 1:
-			cv = cvs[0]
-		default:
-			lines := make([]string, len(cvs))
-			for i, c := range cvs {
-				lines[i] = c.Name + ":" + c.Version
-			}
-			return fmt.Errorf("CTF %q holds several component versions, pass %s%s//<name>:<version> with one of:\n%s",
-				path, ctfPrefix, path, strings.Join(lines, "\n"))
-		}
-	}
-
-	desc, err := repo.GetComponentVersion(ctx, cv.Name, cv.Version)
-	if err != nil {
-		return fmt.Errorf("getting component version %s:%s: %w", cv.Name, cv.Version, err)
-	}
-	return o.render(ctx, repo, desc, helmvalues.CTFPlaceholderHost)
-}
-
 // render renders the selected Helm values template of desc, resolving
 // component-local image references against baseURL.
-func (o *options) render(ctx context.Context, repo helmvalues.Repository, desc *descriptor.Descriptor, baseURL string) error {
+func (o *options) render(ctx context.Context, repo compver.Repository, desc *descriptor.Descriptor, baseURL string) error {
 	var (
 		template *helmvalues.HelmValuesTemplate
 		err      error

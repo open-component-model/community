@@ -1,4 +1,4 @@
-package helmvalues
+package compver
 
 import (
 	"context"
@@ -6,12 +6,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"oras.land/oras-go/v2/registry/remote/auth"
-	"oras.land/oras-go/v2/registry/remote/retry"
-
+	"github.com/oras-project/oras-go/v3/registry/remote/auth"
+	orascreds "github.com/oras-project/oras-go/v3/registry/remote/credentials"
+	"github.com/oras-project/oras-go/v3/registry/remote/properties"
+	"github.com/oras-project/oras-go/v3/registry/remote/retry"
+	genericv1 "ocm.software/open-component-model/bindings/go/configuration/generic/v1/spec"
 	"ocm.software/open-component-model/bindings/go/credentials"
 	credcfgruntime "ocm.software/open-component-model/bindings/go/credentials/spec/config/runtime"
-	genericv1 "ocm.software/open-component-model/bindings/go/configuration/generic/v1/spec"
 	ocicredentials "ocm.software/open-component-model/bindings/go/oci/credentials"
 	ocicredsspec "ocm.software/open-component-model/bindings/go/oci/spec/credentials"
 	ocicredsv1 "ocm.software/open-component-model/bindings/go/oci/spec/credentials/v1"
@@ -71,22 +72,22 @@ func NewAuthClient(ctx context.Context, ocmConfigPath string) (*auth.Client, err
 	}
 
 	return &auth.Client{
-		Client:     retry.DefaultClient,
-		Cache:      auth.NewCache(),
-		Credential: graphCredentialFunc(graph),
+		Client:         retry.DefaultClient,
+		Cache:          auth.NewCache(),
+		CredentialFunc: graphCredentialFunc(graph),
 	}, nil
 }
 
-// graphCredentialFunc returns an auth.CredentialFunc that resolves per-host
+// graphCredentialFunc returns a CredentialFunc that resolves per-host
 // credentials via the credential graph. It never fails the request because one
 // host has no credentials: not-found (and any resolution error) yields the
 // anonymous credential.
-func graphCredentialFunc(graph *credentials.Graph) auth.CredentialFunc {
-	return func(ctx context.Context, hostport string) (auth.Credential, error) {
-		identity, err := ociRegistryIdentity(hostport)
+func graphCredentialFunc(graph *credentials.Graph) orascreds.CredentialFunc {
+	return func(ctx context.Context, resource properties.Resource) (orascreds.Credential, error) {
+		identity, err := ociRegistryIdentity(resource.Registry)
 		if err != nil {
 			// A malformed host cannot be authenticated; treat as anonymous.
-			return auth.EmptyCredential, nil
+			return orascreds.EmptyCredential, nil
 		}
 
 		resolved, err := graph.Resolve(ctx, identity)
@@ -94,7 +95,7 @@ func graphCredentialFunc(graph *credentials.Graph) auth.CredentialFunc {
 			// Not-found is expected (public registries); any other resolution
 			// error is also degraded to anonymous so one host cannot fail
 			// another. Errors are not logged here to avoid surfacing secrets.
-			return auth.EmptyCredential, nil
+			return orascreds.EmptyCredential, nil
 		}
 
 		if creds, ok := resolved.(*ocicredsv1.OCICredentials); ok {
@@ -103,7 +104,7 @@ func graphCredentialFunc(graph *credentials.Graph) auth.CredentialFunc {
 		// A non-OCICredentials result (e.g. DirectCredentials) is not something
 		// oras can consume for an OCI registry; treat as anonymous. With the
 		// OCI credential type scheme wired in, OCI creds always resolve typed.
-		return auth.EmptyCredential, nil
+		return orascreds.EmptyCredential, nil
 	}
 }
 

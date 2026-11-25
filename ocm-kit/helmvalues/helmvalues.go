@@ -12,6 +12,8 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
 	"sigs.k8s.io/yaml"
+
+	"github.com/open-component-model/community/ocm-kit/compver"
 )
 
 // ErrNotFound is returned when a requested Helm values template is not found
@@ -111,7 +113,7 @@ func FindFirstHelmValuesTemplate(desc *descriptor.Descriptor) (*descriptor.Resou
 
 // FetchHelmValuesTemplate downloads the content of the template resource res
 // from repo and returns it as a HelmValuesTemplate.
-func FetchHelmValuesTemplate(ctx context.Context, repo Repository, desc *descriptor.Descriptor, res *descriptor.Resource) (*HelmValuesTemplate, error) {
+func FetchHelmValuesTemplate(ctx context.Context, repo compver.Repository, desc *descriptor.Descriptor, res *descriptor.Resource) (*HelmValuesTemplate, error) {
 	data, err := repo.ResourceBytes(ctx, desc.Component.Name, desc.Component.Version, res.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch helm values template resource %q: %w", res.Name, err)
@@ -127,7 +129,7 @@ func FetchHelmValuesTemplate(ctx context.Context, repo Repository, desc *descrip
 // GetHelmValuesTemplate finds the helm-values template matching chart and
 // downloads its content via repo. It combines FindHelmValuesTemplate and
 // FetchHelmValuesTemplate.
-func GetHelmValuesTemplate(ctx context.Context, repo Repository, desc *descriptor.Descriptor, chart string) (*HelmValuesTemplate, error) {
+func GetHelmValuesTemplate(ctx context.Context, repo compver.Repository, desc *descriptor.Descriptor, chart string) (*HelmValuesTemplate, error) {
 	res, err := FindHelmValuesTemplate(desc, chart)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find helm values template: %w", err)
@@ -139,7 +141,7 @@ func GetHelmValuesTemplate(ctx context.Context, repo Repository, desc *descripto
 // GetFirstHelmValuesTemplate finds the first helm-values template and downloads
 // its content via repo. It combines FindFirstHelmValuesTemplate and
 // FetchHelmValuesTemplate.
-func GetFirstHelmValuesTemplate(ctx context.Context, repo Repository, desc *descriptor.Descriptor) (*HelmValuesTemplate, error) {
+func GetFirstHelmValuesTemplate(ctx context.Context, repo compver.Repository, desc *descriptor.Descriptor) (*HelmValuesTemplate, error) {
 	res, err := FindFirstHelmValuesTemplate(desc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find first helm values template: %w", err)
