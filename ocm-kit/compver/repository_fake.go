@@ -1,8 +1,9 @@
-package helmvalues
+package compver
 
 import (
 	"context"
 	"fmt"
+	"io/fs"
 
 	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
 )
@@ -23,7 +24,7 @@ func (f *FakeRepository) GetComponentVersion(_ context.Context, _, _ string) (*d
 func (f *FakeRepository) ResourceBytes(_ context.Context, _, _, resourceName string) ([]byte, error) {
 	b, ok := f.Blobs[resourceName]
 	if !ok {
-		return nil, fmt.Errorf("resource %q: %w", resourceName, ErrNotFound)
+		return nil, fmt.Errorf("resource %q: %w", resourceName, fs.ErrNotExist)
 	}
 	return b, nil
 }
