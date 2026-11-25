@@ -1,4 +1,4 @@
-package helmvalues
+package compver
 
 import (
 	"context"
@@ -9,9 +9,9 @@ import (
 	"oras.land/oras-go/v2/registry/remote/auth"
 	"oras.land/oras-go/v2/registry/remote/retry"
 
+	genericv1 "ocm.software/open-component-model/bindings/go/configuration/generic/v1/spec"
 	"ocm.software/open-component-model/bindings/go/credentials"
 	credcfgruntime "ocm.software/open-component-model/bindings/go/credentials/spec/config/runtime"
-	genericv1 "ocm.software/open-component-model/bindings/go/configuration/generic/v1/spec"
 	ocicredentials "ocm.software/open-component-model/bindings/go/oci/credentials"
 	ocicredsspec "ocm.software/open-component-model/bindings/go/oci/spec/credentials"
 	ocicredsv1 "ocm.software/open-component-model/bindings/go/oci/spec/credentials/v1"
