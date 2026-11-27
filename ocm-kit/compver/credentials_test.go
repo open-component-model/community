@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/oras-project/oras-go/v3/registry/remote/properties"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,9 +23,9 @@ func TestNewAuthClient_Anonymous(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, c)
 	require.NotNil(t, c.Cache)
-	require.NotNil(t, c.Credential)
+	require.NotNil(t, c.CredentialFunc)
 
-	cred, err := c.Credential(context.Background(), "registry.example.com")
+	cred, err := c.CredentialFunc(context.Background(), properties.Resource{Registry: "registry.example.com"})
 	require.NoError(t, err)
 	require.Empty(t, cred.Username)
 	require.Empty(t, cred.Password)
@@ -59,15 +60,15 @@ func TestNewAuthClient_ResolvesDockerCredential(t *testing.T) {
 
 	c, err := NewAuthClient(context.Background(), "")
 	require.NoError(t, err)
-	require.NotNil(t, c.Credential)
+	require.NotNil(t, c.CredentialFunc)
 
-	cred, err := c.Credential(context.Background(), "registry.example.com")
+	cred, err := c.CredentialFunc(context.Background(), properties.Resource{Registry: "registry.example.com"})
 	require.NoError(t, err)
 	require.Equal(t, "user", cred.Username)
 	require.Equal(t, "pass", cred.Password)
 
 	// An unknown host resolves to anonymous rather than erroring.
-	other, err := c.Credential(context.Background(), "unknown.example.com")
+	other, err := c.CredentialFunc(context.Background(), properties.Resource{Registry: "unknown.example.com"})
 	require.NoError(t, err)
 	require.Empty(t, other.Username)
 }
@@ -98,15 +99,15 @@ configurations:
 
 	c, err := NewAuthClient(context.Background(), "")
 	require.NoError(t, err)
-	require.NotNil(t, c.Credential)
+	require.NotNil(t, c.CredentialFunc)
 
-	cred, err := c.Credential(context.Background(), "ocm.example.com")
+	cred, err := c.CredentialFunc(context.Background(), properties.Resource{Registry: "ocm.example.com"})
 	require.NoError(t, err)
 	require.Equal(t, "ocm-user", cred.Username)
 	require.Equal(t, "ocm-pass", cred.Password)
 
 	// A host without configured credentials falls back to anonymous.
-	other, err := c.Credential(context.Background(), "unconfigured.example.com")
+	other, err := c.CredentialFunc(context.Background(), properties.Resource{Registry: "unconfigured.example.com"})
 	require.NoError(t, err)
 	require.Empty(t, other.Username)
 }
@@ -136,7 +137,7 @@ configurations:
 	c, err := NewAuthClient(context.Background(), ocmConfig)
 	require.NoError(t, err)
 
-	cred, err := c.Credential(context.Background(), "explicit.example.com")
+	cred, err := c.CredentialFunc(context.Background(), properties.Resource{Registry: "explicit.example.com"})
 	require.NoError(t, err)
 	require.Equal(t, "exp-user", cred.Username)
 	require.Equal(t, "exp-pass", cred.Password)
