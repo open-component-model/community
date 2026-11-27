@@ -31,7 +31,7 @@ env:
 
 jobs:
   renovate:
-    environment: renovate
+    environment: ${{ github.event_name != 'pull_request' && 'renovate' || '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
