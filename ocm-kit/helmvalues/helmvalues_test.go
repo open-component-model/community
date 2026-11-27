@@ -7,8 +7,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/flusflas/dipper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
 	v2 "ocm.software/open-component-model/bindings/go/descriptor/v2"
 	ociaccessv1 "ocm.software/open-component-model/bindings/go/oci/spec/access/v1"
@@ -560,4 +562,56 @@ func TestGetRenderingInput_CTFPlaceholderHost(t *testing.T) {
 			Digest:     "sha256:" + testDigest,
 		},
 	}, input.OCIResources)
+}
+
+func TestRenderWithAdditionalConfig(t *testing.T) {
+	a, r := assert.New(t), require.New(t)
+	dip := dipper.New(dipper.Options{Separator: "."})
+	input := &RenderingInput{
+		OCIResources: map[string]ImageReference{
+			"myimage": mkImageRef("ghcr.io/myorg/myapp/myimage:3.0.0"),
+		},
+		Config: map[string]any{
+			"myval": "something",
+		},
+	}
+	tmpl := &HelmValuesTemplate{
+		ResourceName:    "myresource",
+		ResourceVersion: "1.0.0",
+		TemplateContent: `
+myval: {{ if .Config }}{{ .Config.myval }}{{ end }}
+`,
+	}
+
+	res, err := Render(tmpl, input)
+	r.NoError(err)
+	var values map[string]any
+	r.NoError(yaml.Unmarshal([]byte(res), &values))
+
+	a.Equal("something", dip.Get(values, "myval"))
+}
+
+func TestRenderWithEmptyAdditionalConfig(t *testing.T) {
+	a, r := assert.New(t), require.New(t)
+	dip := dipper.New(dipper.Options{Separator: "."})
+	input := &RenderingInput{
+		OCIResources: map[string]ImageReference{
+			"myimage": mkImageRef("ghcr.io/myorg/myapp/myimage:3.0.0"),
+		},
+		Config: nil,
+	}
+	tmpl := &HelmValuesTemplate{
+		ResourceName:    "myresource",
+		ResourceVersion: "1.0.0",
+		TemplateContent: `
+myval: {{ if .Config }}{{ .Config.myval }}{{ end }}
+`,
+	}
+
+	res, err := Render(tmpl, input)
+	r.NoError(err)
+	var values map[string]any
+	r.NoError(yaml.Unmarshal([]byte(res), &values))
+
+	a.Equal(nil, dip.Get(values, "myval"))
 }

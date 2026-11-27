@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 
 	descriptor "ocm.software/open-component-model/bindings/go/descriptor/runtime"
 
@@ -49,6 +50,7 @@ Component-local images from a CTF render with the placeholder host REGISTRY, bec
 	rootCmd.Flags().StringVarP(&opts.chartResName, "chart-resource", "r", "", "Name of the Helm chart resource in the component to render a specific helm values template")
 	rootCmd.Flags().StringVarP(&opts.localHelmValuesTemplate, "local-helm-values-template", "f", "", "Path to a local Helm values template file (overrides component template)")
 	rootCmd.Flags().StringVarP(&opts.pullSecretsFilePath, "pull-secrets-file", "p", "", "Path to a pull secrets JSON file mapping registries to Kubernetes secret names")
+	rootCmd.Flags().StringVarP(&opts.configPath, "additional-config-files", "", "", "File containing additional configuration values in YAML format")
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -60,6 +62,10 @@ type options struct {
 	chartResName            string
 	localHelmValuesTemplate string
 	pullSecretsFilePath     string
+
+	// configPath contains an optional file containing values
+	// for the .Config map
+	configPath string
 }
 
 // render renders the selected Helm values template of desc, resolving
@@ -104,6 +110,19 @@ func (o *options) render(ctx context.Context, repo compver.Repository, desc *des
 			return fmt.Errorf("failed to parse pull secrets file: %w", err)
 		}
 		input.PullSecrets = ps
+	}
+
+	if o.configPath != "" {
+		var configmap map[string]any
+		f, err := os.Open(o.configPath)
+		if err != nil {
+			return fmt.Errorf("opening file %s: %w", o.configPath, err)
+		}
+		defer func() { _ = f.Close() }()
+		if err := yaml.NewDecoder(f).Decode(&configmap); err != nil {
+			return fmt.Errorf("decoding config from file %s: %w", o.configPath, err)
+		}
+		input.Config = configmap
 	}
 
 	output, err := helmvalues.Render(template, input)

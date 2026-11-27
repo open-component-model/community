@@ -4,10 +4,12 @@ go 1.27.3
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
+	github.com/flusflas/dipper v0.2.1
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/oras-project/oras-go/v3 v3.0.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
+	gopkg.in/yaml.v3 v3.0.1
 	ocm.software/open-component-model/bindings/go v0.25.0
 	sigs.k8s.io/yaml v1.6.0
 )
