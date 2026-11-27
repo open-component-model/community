@@ -118,7 +118,7 @@ func (o *options) render(ctx context.Context, repo compver.Repository, desc *des
 		if err != nil {
 			return fmt.Errorf("opening file %s: %w", o.configPath, err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		if err := yaml.NewDecoder(f).Decode(&configmap); err != nil {
 			return fmt.Errorf("decoding config from file %s: %w", o.configPath, err)
 		}
