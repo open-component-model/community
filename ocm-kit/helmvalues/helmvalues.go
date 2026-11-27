@@ -68,6 +68,8 @@ type RenderingInput struct {
 	OCIResources map[string]ImageReference
 	Component    *descriptor.Component
 	PullSecrets  PullSecrets
+	// Config contains any additional, generic configuration data.
+	Config map[string]any
 }
 
 // RenderOption is a functional option for configuring Render behavior
