@@ -9,5 +9,5 @@
 #
 # Example:
 # /my-plugin/            @alice @bob
-
 /ocm-kit/                         @open-component-model/ocm-kit
+/odgcli/                          @tomromeo

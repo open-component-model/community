@@ -1,0 +1,8 @@
+# IDE configuration folders
+.idea
+
+# secrets
+.env
+
+.task
+bin/
